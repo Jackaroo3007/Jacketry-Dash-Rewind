@@ -18,7 +18,7 @@
           "startPercent": 0,
           "endPercent": 0,
           "date": "2026-10-19",
-          "type": "Run to 100",
+          "type": "Progress",
           "amount": 5,
           "note": ""
         },
@@ -26,7 +26,7 @@
           "startPercent": 0,
           "endPercent": 1,
           "date": "2026-10-19",
-          "type": "Run to 100",
+          "type": "Progress",
           "amount": 53,
           "note": ""
         },
@@ -34,7 +34,7 @@
           "startPercent": 0,
           "endPercent": 2,
           "date": "2026-10-19",
-          "type": "Run to 100",
+          "type": "Progress",
           "amount": 10,
           "note": ""
         },
@@ -42,7 +42,7 @@
           "startPercent": 0,
           "endPercent": 4,
           "date": "2026-10-19",
-          "type": "Run to 100",
+          "type": "Progress",
           "amount": 3,
           "note": ""
         },
@@ -50,7 +50,7 @@
           "startPercent": 0,
           "endPercent": 6,
           "date": "2026-10-19",
-          "type": "Run to 100",
+          "type": "Progress",
           "amount": 1,
           "note": ""
         },
@@ -58,7 +58,7 @@
           "startPercent": 0,
           "endPercent": 7,
           "date": "2026-10-19",
-          "type": "Run to 100",
+          "type": "Progress",
           "amount": 1,
           "note": ""
         },
@@ -66,7 +66,31 @@
           "startPercent": 0,
           "endPercent": 9,
           "date": "2026-10-19",
-          "type": "Run to 100",
+          "type": "Progress",
+          "amount": 1,
+          "note": ""
+        },
+        {
+          "startPercent": 0,
+          "endPercent": 13,
+          "date": "2026-10-19",
+          "type": "Progress",
+          "amount": 7,
+          "note": ""
+        },
+        {
+          "startPercent": 0,
+          "endPercent": 15,
+          "date": "2026-10-19",
+          "type": "Progress",
+          "amount": 2,
+          "note": ""
+        },
+        {
+          "startPercent": 0,
+          "endPercent": 16,
+          "date": "2026-10-19",
+          "type": "Progress",
           "amount": 1,
           "note": ""
         },
@@ -84,42 +108,6 @@
           "type": "Run",
           "note": ""
         },
-        {
-          "startPercent": 0,
-          "endPercent": 13,
-          "date": "2026-11-06",
-          "type": "Progress",
-          "note": ""
-        },
-        {
-          "startPercent": 0,
-          "endPercent": 9.34,
-          "date": "2026-11-06",
-          "type": "Progress",
-          "note": ""
-        },
-        {
-          "startPercent": 0,
-          "endPercent": 13,
-          "amount": 2,
-          "date": "2026-11-06",
-          "type": "Progress",
-          "note": ""
-        },
-        {
-          "startPercent": 0,
-          "endPercent": 7.83,
-          "date": "2026-11-06",
-          "type": "Progress",
-          "note": ""
-        },
-        {
-          "startPercent": 0,
-          "endPercent": 15.38,
-          "date": "2026-11-06",
-          "type": "Progress",
-          "note": ""
-        }
       ]
     }
   ]
