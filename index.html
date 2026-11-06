@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -41,7 +40,7 @@ header {display:flex;justify-content:space-between;align-items:center;margin-bot
 .eyebrow {color:var(--cyan);text-transform:uppercase;letter-spacing:.16em;font-size:11px;font-weight:800}
 h1 {font-size:clamp(34px,6vw,56px);letter-spacing:-.055em;line-height:1.02;margin:12px 0}
 .intro {color:var(--muted);max-width:620px;line-height:1.65}
-.stats-grid {display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin:30px 0 34px}
+.stats-grid {display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin:30px 0 34px}
 .stat,.level-card,.panel {
   background:linear-gradient(145deg,rgba(23,29,52,.94),rgba(15,19,36,.94));
   border:1px solid var(--line);border-radius:var(--radius);
@@ -172,7 +171,7 @@ function runEnd(run) {
 }
 
 function getBest(level) {
-  return Math.max(Number(level.bestPercent || 0),...(level.runs || []).map(runEnd));
+  return Math.max(0,...(level.runs || []).map(runEnd));
 }
 
 function runRangeLabel(run) {
@@ -211,15 +210,13 @@ async function loadData() {
 
 function renderHome() {
   const levels=trackerData.levels;
-  const completed=levels.filter(level=>getBest(level)>=100).length;
+  const completed=levels.filter(level=>level.completed===true).length;
   const totalRuns=levels.reduce((sum,level)=>sum+(level.runs||[]).length,0);
-  const highest=levels.length ? Math.max(...levels.map(getBest)) : 0;
-
+  
   const stats=[
     ["LEVELS TRACKED",levels.length],
     ["TOTAL RUNS",totalRuns],
-    ["COMPLETED",completed],
-    ["HIGHEST PROGRESS",highest+"%"]
+    ["COMPLETED",completed]
   ];
 
   $("overviewStats").innerHTML=stats.map(([label,value])=>`
@@ -275,7 +272,7 @@ function showLevel(id) {
 
   const runs=[...(level.runs||[])].sort((a,b)=>runEnd(b)-runEnd(a));
   const best=getBest(level);
-  const completed=best>=100;
+  const completed=level.completed===true;
 
   $("detailContent").innerHTML=`
     <div class="eyebrow">${escapeHTML(level.difficulty||"Level")} ${level.id?"· "+escapeHTML(level.id):""}</div>
