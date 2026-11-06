@@ -15,11 +15,66 @@
       "completed": false,
       "runs": [
         {
+          "startPercent": 0,
+          "endPercent": 0,
+          "date": "2026-10-19",
+          "type": "Run to 100",
+          "amount": 5,
+          "note": ""
+        },
+        {
+          "startPercent": 0,
+          "endPercent": 1,
+          "date": "2026-10-19",
+          "type": "Run to 100",
+          "amount": 53,
+          "note": ""
+        },
+        {
+          "startPercent": 0,
+          "endPercent": 2,
+          "date": "2026-10-19",
+          "type": "Run to 100",
+          "amount": 10,
+          "note": ""
+        },
+        {
+          "startPercent": 0,
+          "endPercent": 4,
+          "date": "2026-10-19",
+          "type": "Run to 100",
+          "amount": 3,
+          "note": ""
+        },
+        {
+          "startPercent": 0,
+          "endPercent": 6,
+          "date": "2026-10-19",
+          "type": "Run to 100",
+          "amount": 1,
+          "note": ""
+        },
+        {
+          "startPercent": 0,
+          "endPercent": 7,
+          "date": "2026-10-19",
+          "type": "Run to 100",
+          "amount": 1,
+          "note": ""
+        },
+        {
+          "startPercent": 0,
+          "endPercent": 9,
+          "date": "2026-10-19",
+          "type": "Run to 100",
+          "amount": 1,
+          "note": ""
+        },
+        {
           "startPercent": 77,
           "endPercent": 100,
           "date": "2026-10-19",
           "type": "Run to 100",
-          "amount": 300,
           "note": ""
         },
         {
