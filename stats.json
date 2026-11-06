@@ -14,10 +14,17 @@
       "description": "None",
       "runs": [
         {
-          "startPercent": 67,
+          "startPercent": 77,
           "endPercent": 100,
-          "date": "2026-10-26",
-          "type": "Progress",
+          "date": "2026-10-19",
+          "type": "Run to 100",
+          "note": ""
+        },
+        {
+          "startPercent": 46,
+          "endPercent": 67,
+          "date": "2026-10-19",
+          "type": "Run",
           "note": ""
         }
       ]
