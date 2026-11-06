@@ -41,6 +41,13 @@
           "date": "2026-11-06",
           "type": "Progress",
           "note": ""
+        },
+        {
+          "startPercent": 0,
+          "endPercent": 13.59,
+          "date": "2026-11-06",
+          "type": "Progress",
+          "note": ""
         }
       ]
     }
