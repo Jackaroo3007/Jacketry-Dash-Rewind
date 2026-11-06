@@ -1,234 +1,364 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#090b16">
-  <title>Geometry Dash — Stats Tracker</title>
-  <style>
-    :root {
-      --bg: #090b16;
-      --panel: #111528;
-      --panel2: #171d34;
-      --line: rgba(160,180,255,.13);
-      --text: #f2f4ff;
-      --muted: #929bb9;
-      --accent: #8b6cff;
-      --cyan: #4de4e8;
-      --green: #63e6a5;
-      --red: #ff6688;
-      --radius: 18px;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0; min-height: 100vh; color: var(--text);
-      background: radial-gradient(ellipse at 15% -10%, rgba(91,70,190,.22), transparent 42%),
-                  radial-gradient(ellipse at 100% 10%, rgba(33,172,190,.10), transparent 35%), var(--bg);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
-    }
-    button, input { font: inherit; }
-    .shell { width: min(1120px, calc(100% - 36px)); margin: 0 auto; padding: 38px 0 70px; }
-    header { display:flex; justify-content:space-between; align-items:center; gap:20px; margin-bottom:38px; }
-    .brand { display:flex; align-items:center; gap:13px; }
-    .logo { width:42px; height:42px; display:grid; place-items:center; border-radius:12px; background:linear-gradient(135deg,#9b78ff,#4cdbdc); color:#090b16; font-size:23px; font-weight:1000; box-shadow:0 7px 30px #755aff44; }
-    .brand-title { font-weight:850; letter-spacing:.02em; }
-    .brand-sub { color:var(--muted); font-size:12px; margin-top:2px; }
-    .live-tag { color:var(--green); border:1px solid #63e6a544; background:#63e6a510; padding:8px 12px; border-radius:999px; font-size:12px; font-weight:750; }
-    .eyebrow { color:var(--cyan); text-transform:uppercase; letter-spacing:.16em; font-size:11px; font-weight:800; }
-    h1 { font-size:clamp(34px,6vw,56px); letter-spacing:-.055em; line-height:1.02; margin:12px 0 12px; }
-    .intro { color:var(--muted); max-width:620px; line-height:1.65; margin:0; }
-    .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:13px; margin:30px 0 34px; }
-    .stat, .level-card, .panel { background:linear-gradient(145deg,rgba(23,29,52,.94),rgba(15,19,36,.94)); border:1px solid var(--line); border-radius:var(--radius); }
-    .stat { padding:18px 19px; }
-    .stat-label { color:var(--muted); font-size:12px; font-weight:650; }
-    .stat-value { font-size:27px; font-weight:850; letter-spacing:-.04em; margin-top:7px; }
-    .section-head { display:flex; justify-content:space-between; align-items:end; gap:18px; margin-bottom:16px; }
-    h2 { font-size:21px; letter-spacing:-.03em; margin:0; }
-    .section-note { color:var(--muted); font-size:12px; margin-top:5px; }
-    .search { width:min(260px,45vw); background:#111528; border:1px solid var(--line); border-radius:11px; padding:11px 13px; color:var(--text); outline:none; }
-    .search:focus { border-color:#8b6cff99; box-shadow:0 0 0 3px #8b6cff18; }
-    .level-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
-    .level-card { padding:18px; cursor:pointer; transition:.18s ease; text-align:left; color:inherit; width:100%; }
-    .level-card:hover { transform:translateY(-3px); border-color:#8b6cff88; background:linear-gradient(145deg,#202747,#141a30); }
-    .card-top { display:flex; justify-content:space-between; align-items:center; gap:10px; }
-    .difficulty { font-size:10px; text-transform:uppercase; letter-spacing:.1em; font-weight:850; color:var(--cyan); background:#4de4e815; padding:6px 8px; border-radius:6px; }
-    .best { color:var(--green); font-size:12px; font-weight:800; }
-    .level-name { font-size:19px; font-weight:800; margin:15px 0 5px; }
-    .level-creator { color:var(--muted); font-size:12px; }
-    .progress-row { display:flex; justify-content:space-between; color:var(--muted); font-size:11px; margin:18px 0 8px; }
-    .bar { height:7px; background:#080b17; border-radius:99px; overflow:hidden; }
-    .bar-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,var(--accent),var(--cyan)); }
-    .card-bottom { display:flex; justify-content:space-between; color:var(--muted); font-size:11px; margin-top:14px; }
-    .empty { color:var(--muted); padding:35px; text-align:center; border:1px dashed var(--line); border-radius:var(--radius); grid-column:1/-1; }
-    .hidden { display:none !important; }
-    .back { border:1px solid var(--line); color:var(--text); background:#171d34; padding:10px 14px; border-radius:10px; cursor:pointer; margin-bottom:22px; }
-    .back:hover { border-color:#8b6cff; }
-    .detail-title-row { display:flex; justify-content:space-between; align-items:start; gap:20px; }
-    .detail-title-row h1 { margin-top:8px; }
-    .detail-best { font-size:30px; font-weight:900; color:var(--green); white-space:nowrap; }
-    .detail-meta { color:var(--muted); margin-top:-3px; font-size:13px; }
-    .detail-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:13px; margin:25px 0; }
-    .panel { padding:20px; }
-    .panel h3 { margin:0 0 16px; font-size:15px; }
-    .run-list { display:grid; gap:10px; }
-    .run { display:grid; grid-template-columns:85px 1fr auto; align-items:center; gap:13px; background:#0c1020; border:1px solid var(--line); padding:13px; border-radius:12px; }
-    .run-percent { font-size:18px; font-weight:850; }
-    .run-date { color:var(--muted); font-size:11px; margin-top:3px; }
-    .run-note { color:#c4cbe2; font-size:12px; }
-    .run-type { color:var(--cyan); font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; }
-    .no-runs { color:var(--muted); font-size:13px; }
-    footer { color:#66708e; text-align:center; font-size:11px; margin-top:48px; }
-    @media(max-width:760px) {
-      .stats-grid { grid-template-columns:repeat(2,1fr); }
-      .level-grid { grid-template-columns:repeat(2,1fr); }
-      .detail-stats { grid-template-columns:1fr; }
-    }
-    @media(max-width:520px) {
-      .shell { width:calc(100% - 24px); padding-top:24px; }
-      header { margin-bottom:30px; }
-      .level-grid { grid-template-columns:1fr; }
-      .section-head { align-items:stretch; flex-direction:column; }
-      .search { width:100%; }
-      .detail-title-row { flex-direction:column; gap:0; }
-      .detail-best { font-size:25px; }
-      .run { grid-template-columns:65px 1fr; }
-      .run-type { grid-column:2; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GD Stats Tracker</title>
+<style>
+:root {
+  --bg:#090b16;
+  --panel:#111528;
+  --panel2:#171d34;
+  --line:rgba(160,180,255,.13);
+  --text:#f2f4ff;
+  --muted:#929bb9;
+  --accent:#8b6cff;
+  --cyan:#4de4e8;
+  --green:#63e6a5;
+  --radius:18px;
+}
+* {box-sizing:border-box}
+body {
+  margin:0;
+  min-height:100vh;
+  color:var(--text);
+  background:radial-gradient(ellipse at 15% -10%,rgba(91,70,190,.22),transparent 42%),radial-gradient(ellipse at 100% 10%,rgba(33,172,190,.10),transparent 35%),var(--bg);
+  font-family:Inter,system-ui,sans-serif;
+}
+button,input {font:inherit}
+.shell {width:min(1120px,calc(100% - 36px));margin:auto;padding:38px 0 70px}
+header {display:flex;justify-content:space-between;align-items:center;margin-bottom:38px}
+.brand {display:flex;align-items:center;gap:13px}
+.logo {
+  width:42px;height:42px;display:grid;place-items:center;
+  border-radius:12px;background:linear-gradient(135deg,#9b78ff,#4cdbdc);
+  color:#090b16;font-size:23px;font-weight:1000;
+}
+.brand-title {font-weight:850}
+.brand-sub {color:var(--muted);font-size:12px;margin-top:2px}
+.live-tag {color:var(--green);border:1px solid #63e6a544;background:#63e6a510;padding:8px 12px;border-radius:999px;font-size:12px;font-weight:750}
+.eyebrow {color:var(--cyan);text-transform:uppercase;letter-spacing:.16em;font-size:11px;font-weight:800}
+h1 {font-size:clamp(34px,6vw,56px);letter-spacing:-.055em;line-height:1.02;margin:12px 0}
+.intro {color:var(--muted);max-width:620px;line-height:1.65}
+.stats-grid {display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin:30px 0 34px}
+.stat,.level-card,.panel {
+  background:linear-gradient(145deg,rgba(23,29,52,.94),rgba(15,19,36,.94));
+  border:1px solid var(--line);border-radius:var(--radius);
+}
+.stat {padding:18px 19px}
+.stat-label {color:var(--muted);font-size:12px;font-weight:650}
+.stat-value {font-size:27px;font-weight:850;margin-top:7px}
+.section-head {display:flex;justify-content:space-between;align-items:end;gap:18px;margin-bottom:16px}
+h2 {font-size:21px;margin:0}
+.section-note {color:var(--muted);font-size:12px;margin-top:5px}
+.search {width:min(260px,45vw);background:#111528;border:1px solid var(--line);border-radius:11px;padding:11px 13px;color:var(--text);outline:none}
+.search:focus {border-color:#8b6cff}
+.level-grid {display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.level-card {padding:18px;cursor:pointer;color:inherit;width:100%;text-align:left;transition:.18s}
+.level-card:hover {transform:translateY(-3px);border-color:#8b6cff88}
+.card-top {display:flex;justify-content:space-between;align-items:center}
+.difficulty {font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-weight:850;color:var(--cyan);background:#4de4e815;padding:6px 8px;border-radius:6px}
+.best {color:var(--green);font-size:12px;font-weight:800}
+.level-name {font-size:19px;font-weight:800;margin:15px 0 5px}
+.level-creator {color:var(--muted);font-size:12px}
+.progress-row {display:flex;justify-content:space-between;color:var(--muted);font-size:11px;margin:18px 0 8px}
+.bar {height:10px;background:#080b17;border-radius:99px;position:relative;overflow:hidden}
+.bar-runs {position:absolute;inset:0}
+.bar-run {position:absolute;top:0;bottom:0;min-width:3px;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--cyan));box-shadow:0 0 9px #8b6cff66}
+.bar-legend {display:flex;justify-content:space-between;color:var(--muted);font-size:10px;margin-top:7px}
+.card-bottom {display:flex;justify-content:space-between;color:var(--muted);font-size:11px;margin-top:14px}
+.empty {color:var(--muted);padding:35px;text-align:center;border:1px dashed var(--line);border-radius:var(--radius);grid-column:1/-1}
+.hidden {display:none!important}
+.back {border:1px solid var(--line);color:var(--text);background:#171d34;padding:10px 14px;border-radius:10px;cursor:pointer;margin-bottom:22px}
+.detail-title-row {display:flex;justify-content:space-between;align-items:start;gap:20px}
+.detail-title-row h1 {margin-top:8px}
+.detail-best {font-size:30px;font-weight:900;color:var(--green)}
+.detail-meta {color:var(--muted);font-size:13px}
+.detail-stats {display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin:25px 0}
+.panel {padding:20px}
+.panel h3 {margin:0 0 16px;font-size:15px}
+.run-list {display:grid;gap:10px}
+.run {display:grid;grid-template-columns:85px 1fr auto;align-items:center;gap:13px;background:#0c1020;border:1px solid var(--line);padding:13px;border-radius:12px}
+.run-range {font-size:18px;font-weight:850;white-space:nowrap}
+.run-date {color:var(--muted);font-size:11px;margin-top:3px}
+.run-note {color:#c4cbe2;font-size:12px}
+.run-type {color:var(--cyan);font-size:10px;font-weight:800;text-transform:uppercase}
+.no-runs {color:var(--muted);font-size:13px}
+footer {color:#66708e;text-align:center;font-size:11px;margin-top:48px}
+@media(max-width:760px) {
+  .stats-grid {grid-template-columns:repeat(2,1fr)}
+  .level-grid {grid-template-columns:repeat(2,1fr)}
+  .detail-stats {grid-template-columns:1fr}
+}
+@media(max-width:520px) {
+  .shell {width:calc(100% - 24px);padding-top:24px}
+  .level-grid {grid-template-columns:1fr}
+  .section-head {align-items:stretch;flex-direction:column}
+  .search {width:100%}
+  .detail-title-row {flex-direction:column}
+  .run {grid-template-columns:65px 1fr}
+  .run-type {grid-column:2}
+}
+</style>
 </head>
 <body>
-  <main class="shell">
-    <header>
-      <div class="brand">
-        <div class="logo">GD</div>
-        <div><div class="brand-title">DASHBOARD</div><div class="brand-sub">PERSONAL PROGRESS TRACKER</div></div>
-      </div>
-      <div class="live-tag">● PERSONAL TRACKER</div>
-    </header>
+<main class="shell">
+<header>
+  <div class="brand">
+    <div class="logo">GD</div>
+    <div>
+      <div class="brand-title">DASHBOARD</div>
+      <div class="brand-sub">PROGRESS TRACKER</div>
+    </div>
+  </div>
+  <div class="live-tag">● PERSONAL TRACKER</div>
+</header>
 
-    <section id="home">
-      <div class="eyebrow">Geometry Dash · Progress archive</div>
-      <h1>Your runs.<br><span style="background:linear-gradient(90deg,#a88cff,#53e3e5);background-clip:text;color:transparent">Your progress.</span></h1>
-      <p class="intro">A place to keep track of your Geometry Dash progress, best runs and milestones. Pick a level to explore its full run history.</p>
-      <div class="stats-grid" id="overviewStats"></div>
-      <div class="section-head">
-        <div><h2>Level archive</h2><div class="section-note" id="levelCount">Your tracked levels</div></div>
-        <input class="search" id="search" type="search" placeholder="Search levels..." aria-label="Search levels">
-      </div>
-      <div class="level-grid" id="levelGrid"></div>
-    </section>
+<section id="home">
+  <div class="eyebrow">Geometry Dash · Progress archive</div>
+  <h1>Your runs.<br><span style="background:linear-gradient(90deg,#a88cff,#53e3e5);background-clip:text;color:transparent">Jack's progress.</span></h1>
+  <p class="intro">A place to keep track of your Geometry Dash progress, best runs and milestones. Pick a level to explore its full run history. Please note that AI was used to create this with the plans of making this less and less AI induced every update. This is because I just wanted a nice looking tracker instead of some shitty coded html page. As updates go along the website will become more coded manually as i learn :)</p>
 
-    <section id="detail" class="hidden">
-      <button class="back" id="backButton">← Back to all levels</button>
-      <div id="detailContent"></div>
-    </section>
-    <footer>MANUALLY UPDATED · DATA STORED IN <code>stats.json</code></footer>
-  </main>
+  <div class="stats-grid" id="overviewStats"></div>
 
-  <script>
-    let trackerData = { player: {}, levels: [] };
+  <div class="section-head">
+    <div>
+      <h2>Level archive</h2>
+      <div class="section-note" id="levelCount"></div>
+    </div>
+    <input class="search" id="search" type="search" placeholder="Search levels...">
+  </div>
 
-    const $ = (id) => document.getElementById(id);
-    const formatDate = (date) => {
-      if (!date) return "Date not set";
-      const parsed = new Date(date + (date.length === 10 ? "T12:00:00" : ""));
-      return Number.isNaN(parsed.getTime()) ? date : parsed.toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"numeric" });
-    };
-    const getBest = (level) => Math.max(Number(level.bestPercent || 0), ...(level.runs || []).map(run => Number(run.percent || 0)));
+  <div class="level-grid" id="levelGrid"></div>
+</section>
 
-    async function loadData() {
-      try {
-        const response = await fetch("./stats.json", { cache:"no-store" });
-        if (!response.ok) throw new Error("Could not load stats.json (" + response.status + ")");
-        trackerData = await response.json();
-        if (!Array.isArray(trackerData.levels)) trackerData.levels = [];
-        renderHome();
-      } catch (error) {
-        $("overviewStats").innerHTML = `<div class="empty" style="grid-column:1/-1">Couldn't load <b>stats.json</b>. Make sure it is in the same folder as index.html and contains valid JSON.<br><small>${error.message}</small></div>`;
-        $("levelGrid").innerHTML = "";
-      }
-    }
+<section id="detail" class="hidden">
+  <button class="back" id="backButton">← Back to all levels</button>
+  <div id="detailContent"></div>
+</section>
 
-    function renderHome() {
-      const levels = trackerData.levels;
-      const completed = levels.filter(level => getBest(level) >= 100).length;
-      const totalRuns = levels.reduce((sum, level) => sum + (level.runs || []).length, 0);
-      const highest = levels.length ? Math.max(...levels.map(getBest)) : 0;
-      const hardest = levels.filter(level => getBest(level) > 0).sort((a,b) => (Number(b.difficultyRating)||0) - (Number(a.difficultyRating)||0))[0];
-      const stats = [
-        ["LEVELS TRACKED", levels.length],
-        ["TOTAL RUNS", totalRuns],
-        ["COMPLETED", completed],
-        ["HIGHEST PROGRESS", highest + "%"]
-      ];
-      $("overviewStats").innerHTML = stats.map(([label,value]) => `<div class="stat"><div class="stat-label">${label}</div><div class="stat-value">${value}</div></div>`).join("");
-      $("levelCount").textContent = `${levels.length} level${levels.length === 1 ? "" : "s"} in your archive`;
-      renderLevelCards(levels);
-    }
+<footer>MANUALLY UPDATED · DATA STORED IN <code>stats.json</code></footer>
+</main>
 
-    function renderLevelCards(levels) {
-      if (!levels.length) {
-        $("levelGrid").innerHTML = '<div class="empty">No levels added yet. Add your first level to <b>stats.json</b> and it will appear here.</div>';
-        return;
-      }
-      $("levelGrid").innerHTML = levels.map(level => {
-        const best = getBest(level);
-        const runs = level.runs || [];
-        return `<button class="level-card" data-level="${escapeAttr(level.id)}">
-          <div class="card-top"><span class="difficulty">${escapeHTML(level.difficulty || "Unrated")}</span><span class="best">${best}%</span></div>
-          <div class="level-name">${escapeHTML(level.name || "Unnamed level")}</div>
-          <div class="level-creator">by ${escapeHTML(level.creator || "Unknown creator")}</div>
-          <div class="progress-row"><span>BEST PROGRESS</span><span>${best}%</span></div>
-          <div class="bar"><div class="bar-fill" style="width:${Math.max(0,Math.min(100,best))}%"></div></div>
-          <div class="card-bottom"><span>${runs.length} recorded run${runs.length === 1 ? "" : "s"}</span><span>View level ↗</span></div>
-        </button>`;
-      }).join("");
-      document.querySelectorAll("[data-level]").forEach(card => card.addEventListener("click", () => showLevel(card.dataset.level)));
-    }
+<script>
+let trackerData = {player:{},levels:[]};
 
-    function showLevel(id) {
-      const level = trackerData.levels.find(item => String(item.id) === String(id));
-      if (!level) return;
-      const runs = [...(level.runs || [])].sort((a,b) => (b.percent || 0) - (a.percent || 0));
-      const best = getBest(level);
-      const completed = best >= 100;
-      $("detailContent").innerHTML = `
-        <div class="eyebrow">${escapeHTML(level.difficulty || "Level")} ${level.id ? "· " + escapeHTML(String(level.id)) : ""}</div>
-        <div class="detail-title-row"><div><h1>${escapeHTML(level.name || "Unnamed level")}</h1><div class="detail-meta">by ${escapeHTML(level.creator || "Unknown creator")}${level.song ? " · " + escapeHTML(level.song) : ""}</div></div><div class="detail-best">${best}%</div></div>
-        <div class="detail-stats">
-          <div class="stat"><div class="stat-label">BEST PROGRESS</div><div class="stat-value">${best}%</div></div>
-          <div class="stat"><div class="stat-label">RECORDED RUNS</div><div class="stat-value">${runs.length}</div></div>
-          <div class="stat"><div class="stat-label">STATUS</div><div class="stat-value" style="font-size:21px">${completed ? "Completed ✓" : "In progress"}</div></div>
+const $ = id => document.getElementById(id);
+
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g,char => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[char]));
+}
+
+function escapeAttr(value) {
+  return escapeHTML(value).replace(/`/g,"&#96;");
+}
+
+function formatDate(date) {
+  if(!date) return "Date not set";
+  const parsed = new Date(date + (date.length===10 ? "T12:00:00" : ""));
+  return Number.isNaN(parsed.getTime()) ? date :
+    parsed.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});
+}
+
+function runStart(run) {
+  return Number(run.startPercent ?? 0);
+}
+
+function runEnd(run) {
+  return Number(run.endPercent ?? run.percent ?? 0);
+}
+
+function getBest(level) {
+  return Math.max(Number(level.bestPercent || 0),...(level.runs || []).map(runEnd));
+}
+
+function runRangeLabel(run) {
+  return `${runStart(run)}-${runEnd(run)}%`;
+}
+
+function renderRunBar(runs) {
+  const segments = (runs || [])
+    .filter(run => runEnd(run)>runStart(run) || runEnd(run)>0)
+    .map(run => {
+      const start = Math.max(0,Math.min(100,runStart(run)));
+      const end = Math.max(start,Math.min(100,runEnd(run)));
+      return `<span class="bar-run" title="${start}-${end}%" style="left:${start}%;width:${end-start}%"></span>`;
+    }).join("");
+
+  return `
+    <div class="bar" role="img" aria-label="Recorded progress runs">
+      <div class="bar-runs">${segments}</div>
+    </div>
+    <div class="bar-legend"><span>0%</span><span>100%</span></div>
+  `;
+}
+
+async function loadData() {
+  try {
+    const response = await fetch("./stats.json",{cache:"no-store"});
+    if(!response.ok) throw new Error("Could not load stats.json");
+    trackerData = await response.json();
+    if(!Array.isArray(trackerData.levels)) trackerData.levels=[];
+    renderHome();
+  } catch(error) {
+    $("overviewStats").innerHTML =
+      `<div class="empty" style="grid-column:1/-1">Couldn't load stats.json. Make sure it is beside index.html and contains valid JSON.</div>`;
+  }
+}
+
+function renderHome() {
+  const levels=trackerData.levels;
+  const completed=levels.filter(level=>getBest(level)>=100).length;
+  const totalRuns=levels.reduce((sum,level)=>sum+(level.runs||[]).length,0);
+  const highest=levels.length ? Math.max(...levels.map(getBest)) : 0;
+
+  const stats=[
+    ["LEVELS TRACKED",levels.length],
+    ["TOTAL RUNS",totalRuns],
+    ["COMPLETED",completed],
+    ["HIGHEST PROGRESS",highest+"%"]
+  ];
+
+  $("overviewStats").innerHTML=stats.map(([label,value])=>`
+    <div class="stat">
+      <div class="stat-label">${label}</div>
+      <div class="stat-value">${value}</div>
+    </div>
+  `).join("");
+
+  $("levelCount").textContent=`${levels.length} level${levels.length===1?"":"s"} in your archive`;
+  renderLevelCards(levels);
+}
+
+function renderLevelCards(levels) {
+  if(!levels.length) {
+    $("levelGrid").innerHTML='<div class="empty">No levels added yet. Add your first level to stats.json.</div>';
+    return;
+  }
+
+  $("levelGrid").innerHTML=levels.map(level=>{
+    const best=getBest(level);
+    const runs=level.runs||[];
+
+    return `
+      <button class="level-card" data-level="${escapeAttr(level.id)}">
+        <div class="card-top">
+          <span class="difficulty">${escapeHTML(level.difficulty||"Unrated")}</span>
+          <span class="best">${best}%</span>
         </div>
-        ${level.description ? `<div class="panel" style="margin-bottom:15px"><h3>About this level</h3><div class="run-note">${escapeHTML(level.description)}</div></div>` : ""}
-        <div class="panel"><h3>Run history <span style="color:var(--muted);font-weight:500">(${runs.length})</span></h3>
-          ${runs.length ? `<div class="run-list">${runs.map(run => `<div class="run">
-            <div><div class="run-percent">${Number(run.percent)||0}%</div><div class="run-date">${formatDate(String(run.date || ""))}</div></div>
-            <div><div class="run-note">${escapeHTML(run.note || "No notes for this run")}</div></div>
-            <div class="run-type">${escapeHTML(run.type || "Run")}</div>
-          </div>`).join("")}</div>` : '<div class="no-runs">No runs have been recorded for this level yet.</div>'}
-        </div>`;
-      $("home").classList.add("hidden");
-      $("detail").classList.remove("hidden");
-      window.scrollTo({top:0, behavior:"smooth"});
-    }
+        <div class="level-name">${escapeHTML(level.name||"Unnamed level")}</div>
+        <div class="level-creator">by ${escapeHTML(level.creator||"Unknown creator")}</div>
+        <div class="progress-row">
+          <span>RECORDED RUNS</span>
+          <span>${runs.length}</span>
+        </div>
+        ${renderRunBar(runs)}
+        <div class="card-bottom">
+          <span>${runs.length} recorded runs</span>
+          <span>View level ↗</span>
+        </div>
+      </button>
+    `;
+  }).join("");
 
-    function escapeHTML(value) {
-      return String(value).replace(/[&<>"']/g, char => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[char]));
-    }
-    function escapeAttr(value) { return escapeHTML(value).replace(/`/g, "&#96;"); }
+  document.querySelectorAll("[data-level]").forEach(card=>{
+    card.addEventListener("click",()=>showLevel(card.dataset.level));
+  });
+}
 
-    $("backButton").addEventListener("click", () => {
-      $("detail").classList.add("hidden");
-      $("home").classList.remove("hidden");
-      window.scrollTo({top:0, behavior:"smooth"});
-    });
-    $("search").addEventListener("input", event => {
-      const query = event.target.value.trim().toLowerCase();
-      renderLevelCards(trackerData.levels.filter(level => [level.name, level.creator, level.difficulty].join(" ").toLowerCase().includes(query)));
-    });
+function showLevel(id) {
+  const level=trackerData.levels.find(item=>String(item.id)===String(id));
+  if(!level) return;
 
-    loadData();
-  </script>
+  const runs=[...(level.runs||[])].sort((a,b)=>runEnd(b)-runEnd(a));
+  const best=getBest(level);
+  const completed=best>=100;
+
+  $("detailContent").innerHTML=`
+    <div class="eyebrow">${escapeHTML(level.difficulty||"Level")} ${level.id?"· "+escapeHTML(level.id):""}</div>
+
+    <div class="detail-title-row">
+      <div>
+        <h1>${escapeHTML(level.name||"Unnamed level")}</h1>
+        <div class="detail-meta">
+          by ${escapeHTML(level.creator||"Unknown creator")}
+          ${level.song?" · "+escapeHTML(level.song):""}
+        </div>
+      </div>
+      <div class="detail-best">${best}%</div>
+    </div>
+
+    <div class="detail-stats">
+      <div class="stat">
+        <div class="stat-label">BEST PROGRESS</div>
+        <div class="stat-value">${best}%</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">RECORDED RUNS</div>
+        <div class="stat-value">${runs.length}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">STATUS</div>
+        <div class="stat-value" style="font-size:21px">${completed?"Completed ✓":"In progress"}</div>
+      </div>
+    </div>
+
+    ${level.description?`
+      <div class="panel" style="margin-bottom:15px">
+        <h3>About this level</h3>
+        <div class="run-note">${escapeHTML(level.description)}</div>
+      </div>
+    `:""}
+
+    <div class="panel" style="margin-bottom:15px">
+      <h3>Progress runs</h3>
+      ${renderRunBar(runs)}
+      <div class="section-note">Each coloured section represents a run, positioned between its start and end percentage. Overlapping runs are shown on top of each other.</div>
+    </div>
+
+    <div class="panel">
+      <h3>Run history (${runs.length})</h3>
+      ${runs.length?`
+        <div class="run-list">
+          ${runs.map(run=>`
+            <div class="run">
+              <div>
+                <div class="run-range">${runRangeLabel(run)}</div>
+                <div class="run-date">${formatDate(String(run.date||""))}</div>
+              </div>
+              <div>
+                <div class="run-note">${escapeHTML(run.note||"No notes for this run")}</div>
+              </div>
+              <div class="run-type">${escapeHTML(run.type||"Run")}</div>
+            </div>
+          `).join("")}
+        </div>
+      `:'<div class="no-runs">No runs recorded yet.</div>'}
+    </div>
+  `;
+
+  $("home").classList.add("hidden");
+  $("detail").classList.remove("hidden");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+$("backButton").addEventListener("click",()=>{
+  $("detail").classList.add("hidden");
+  $("home").classList.remove("hidden");
+  window.scrollTo({top:0,behavior:"smooth"});
+});
+
+$("search").addEventListener("input",event=>{
+  const query=event.target.value.trim().toLowerCase();
+  renderLevelCards(trackerData.levels.filter(level=>
+    [level.name,level.creator,level.difficulty].join(" ").toLowerCase().includes(query)
+  ));
+});
+
+loadData();
+</script>
 </body>
 </html>
