@@ -86,9 +86,7 @@ h2 {font-size:21px;margin:0}
   border-radius:0;
   background:#8b6cff;
 }
-.bar-run.overlap {
-  background:#4de4e8;
-}
+.bar-run.overlap {background:#4de4e8}
 .bar-legend {display:flex;justify-content:space-between;color:var(--muted);font-size:10px;margin-top:7px}
 .card-bottom {display:flex;justify-content:space-between;color:var(--muted);font-size:11px;margin-top:14px}
 .empty {color:var(--muted);padding:35px;text-align:center;border:1px dashed var(--line);border-radius:var(--radius);grid-column:1/-1}
@@ -195,11 +193,14 @@ function runEnd(run) {
 }
 
 function getBest(level) {
-  return Math.max(0,...(level.runs || []).map(runEnd));
+  const zeroStartRuns=(level.runs||[]).filter(run=>runStart(run)===0);
+  return Math.max(0,...zeroStartRuns.map(runEnd));
 }
 
 function runRangeLabel(run) {
-  return `${runStart(run)}-${runEnd(run)}%`;
+  const start=runStart(run);
+  const end=runEnd(run);
+  return start===0 ? `${end}%` : `${start}-${end}%`;
 }
 
 function renderRunBar(runs) {
