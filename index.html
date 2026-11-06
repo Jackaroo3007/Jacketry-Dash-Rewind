@@ -177,9 +177,13 @@ function getBest(level) {
 }
 
 function runRangeLabel(run) {
-  const start=runStart(run);
-  const end=runEnd(run);
-  return start===0 ? `${end}%` : `${start}-${end}%`;
+  const start = runStart(run);
+  const end = runEnd(run);
+  const amount = run.Amount ?? 1;
+
+  const range = start === 0 ? `${end}%` : `${start}-${end}%`;
+
+  return amount > 1 ? `${range} x${amount}` : range;
 }
 
 function renderRunBar(runs) {
@@ -331,6 +335,7 @@ function showLevel(id) {
               <div>
                 <div class="run-range">${runRangeLabel(run)}</div>
                 <div class="run-date">${formatDate(String(run.date||""))}</div>
+              
               </div>
               <div>
                 <div class="run-note">${escapeHTML(run.note||"No notes for this run")}</div>
