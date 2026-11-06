@@ -1,46 +1,23 @@
 {
   "player": {
-    "name": "Your name",
+    "name": "Jackaroo3007",
     "profile": ""
   },
   "levels": [
     {
-      "id": "bloodbath",
-      "name": "Bloodbath",
-      "creator": "Riot",
+      "id": "26681070",
+      "name": "Sonic Wave",
+      "creator": "Cyclic",
       "difficulty": "Extreme Demon",
-      "song": "At the Speed of Light",
-      "bestPercent": 42,
-      "description": "Add any extra information about your progress here.",
+      "song": "F-777, Sonic Blaster",
+      "bestPercent": 17,
+      "description": "None",
       "runs": [
         {
-          "percent": 42,
-          "date": "2026-11-01",
+          "percent": "67-100",
+          "date": "2026-10-26",
           "type": "Progress",
-          "note": "Example run — replace this with your own."
-        },
-        {
-          "percent": 27,
-          "date": "2026-10-20",
-          "type": "Progress",
-          "note": "Another example run."
-        }
-      ]
-    },
-    {
-      "id": "acu",
-      "name": "Acu",
-      "creator": "Neigefeu",
-      "difficulty": "Extreme Demon",
-      "song": "Sphere",
-      "bestPercent": 18,
-      "description": "",
-      "runs": [
-        {
-          "percent": 18,
-          "date": "2026-10-25",
-          "type": "Progress",
-          "note": "Example run — edit or delete me."
+          "note": ""
         }
       ]
     }
