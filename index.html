@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,7 +23,7 @@ body {
   margin:0;
   min-height:100vh;
   color:var(--text);
-  background:radial-gradient(ellipse at 15% -10%,rgba(91,70,190,.22),transparent 42%),radial-gradient(ellipse at 100% 10%,rgba(33,172,190,.10),transparent 35%),var(--bg);
+  background:var(--bg);
   font-family:Inter,system-ui,sans-serif;
 }
 button,input {font:inherit}
@@ -31,7 +32,7 @@ header {display:flex;justify-content:space-between;align-items:center;margin-bot
 .brand {display:flex;align-items:center;gap:13px}
 .logo {
   width:42px;height:42px;display:grid;place-items:center;
-  border-radius:12px;background:linear-gradient(135deg,#9b78ff,#4cdbdc);
+  border-radius:12px;background:#8b6cff;
   color:#090b16;font-size:23px;font-weight:1000;
 }
 .brand-title {font-weight:850}
@@ -42,7 +43,7 @@ h1 {font-size:clamp(34px,6vw,56px);letter-spacing:-.055em;line-height:1.02;margi
 .intro {color:var(--muted);max-width:620px;line-height:1.65}
 .stats-grid {display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin:30px 0 34px}
 .stat,.level-card,.panel {
-  background:linear-gradient(145deg,rgba(23,29,52,.94),rgba(15,19,36,.94));
+  background:#131a30;
   border:1px solid var(--line);border-radius:var(--radius);
 }
 .stat {padding:18px 19px}
@@ -62,9 +63,32 @@ h2 {font-size:21px;margin:0}
 .level-name {font-size:19px;font-weight:800;margin:15px 0 5px}
 .level-creator {color:var(--muted);font-size:12px}
 .progress-row {display:flex;justify-content:space-between;color:var(--muted);font-size:11px;margin:18px 0 8px}
-.bar {height:10px;background:#080b17;border-radius:99px;position:relative;overflow:hidden}
-.bar-runs {position:absolute;inset:0}
-.bar-run {position:absolute;top:0;bottom:0;min-width:3px;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--cyan));box-shadow:0 0 9px #8b6cff66}
+.bar {
+  height:12px;
+  background:#080b17;
+  border:1px solid rgba(160,180,255,.2);
+  border-radius:999px;
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+}
+.bar-runs {
+  position:absolute;
+  inset:0;
+  overflow:hidden;
+  border-radius:inherit;
+}
+.bar-run {
+  position:absolute;
+  top:0;
+  bottom:0;
+  min-width:0;
+  border-radius:0;
+  background:#8b6cff;
+}
+.bar-run.overlap {
+  background:#4de4e8;
+}
 .bar-legend {display:flex;justify-content:space-between;color:var(--muted);font-size:10px;margin-top:7px}
 .card-bottom {display:flex;justify-content:space-between;color:var(--muted);font-size:11px;margin-top:14px}
 .empty {color:var(--muted);padding:35px;text-align:center;border:1px dashed var(--line);border-radius:var(--radius);grid-column:1/-1}
@@ -116,7 +140,7 @@ footer {color:#66708e;text-align:center;font-size:11px;margin-top:48px}
 
 <section id="home">
   <div class="eyebrow">Geometry Dash · Progress archive</div>
-  <h1>Your runs.<br><span style="background:linear-gradient(90deg,#a88cff,#53e3e5);background-clip:text;color:transparent">Jack's progress.</span></h1>
+  <h1>Your runs.<br><span style="color:#a88cff">Jack's progress.</span></h1>
   <p class="intro">A place to keep track of Jack's Geometry Dash progress, best runs and milestones. Pick a level to explore its full run history. Please note that AI was used to create this with the plans of making this less and less AI induced every update. This is because I just wanted a nice looking tracker instead of some shitty coded html page. As updates go along the website will become more coded manually as i learn :)</p>
 
   <div class="stats-grid" id="overviewStats"></div>
@@ -179,17 +203,33 @@ function runRangeLabel(run) {
 }
 
 function renderRunBar(runs) {
-  const segments = (runs || [])
-    .filter(run => runEnd(run)>runStart(run) || runEnd(run)>0)
-    .map(run => {
-      const start = Math.max(0,Math.min(100,runStart(run)));
-      const end = Math.max(start,Math.min(100,runEnd(run)));
-      return `<span class="bar-run" title="${start}-${end}%" style="left:${start}%;width:${end-start}%"></span>`;
-    }).join("");
+  const validRuns=(runs||[]).map(run=>({
+    start:Math.max(0,Math.min(100,runStart(run))),
+    end:Math.max(0,Math.min(100,runEnd(run)))
+  })).filter(run=>run.end>run.start);
+
+  const boundaries=[...new Set(validRuns.flatMap(run=>[run.start,run.end]))].sort((a,b)=>a-b);
+  const segments=[];
+
+  for(let i=0;i<boundaries.length-1;i++) {
+    const start=boundaries[i];
+    const end=boundaries[i+1];
+    const middle=(start+end)/2;
+    const active=validRuns.filter(run=>middle>=run.start&&middle<run.end).length;
+    if(!active) continue;
+
+    segments.push(`
+      <span
+        class="bar-run${active>1?" overlap":""}"
+        title="${start.toFixed(2)}-${end.toFixed(2)}% · ${active} overlapping run${active===1?"":"s"}"
+        style="left:${start}%;width:${end-start}%"
+      ></span>
+    `);
+  }
 
   return `
-    <div class="bar" role="img" aria-label="Recorded progress runs">
-      <div class="bar-runs">${segments}</div>
+    <div class="bar" role="img" aria-label="Recorded progress runs; cyan sections show overlapping runs">
+      <div class="bar-runs">${segments.join("")}</div>
     </div>
     <div class="bar-legend"><span>0%</span><span>100%</span></div>
   `;
@@ -212,7 +252,7 @@ function renderHome() {
   const levels=trackerData.levels;
   const completed=levels.filter(level=>level.completed===true).length;
   const totalRuns=levels.reduce((sum,level)=>sum+(level.runs||[]).length,0);
-  
+
   const stats=[
     ["LEVELS TRACKED",levels.length],
     ["TOTAL RUNS",totalRuns],
@@ -313,7 +353,7 @@ function showLevel(id) {
     <div class="panel" style="margin-bottom:15px">
       <h3>Progress runs</h3>
       ${renderRunBar(runs)}
-      <div class="section-note">Each coloured section represents a run, positioned between its start and end percentage. Overlapping runs are shown on top of each other.</div>
+      <div class="section-note">Purple shows a section covered by one run. Cyan shows where two or more runs overlap; the colour switches exactly where the overlap starts and ends.</div>
     </div>
 
     <div class="panel">
