@@ -12,6 +12,7 @@
       "song": "F-777, Sonic Blaster",
       "bestPercent": 17,
       "description": "None",
+      "completed": false,
       "runs": [
         {
           "startPercent": 77,
