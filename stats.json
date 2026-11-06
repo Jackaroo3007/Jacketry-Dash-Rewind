@@ -1,0 +1,48 @@
+{
+  "player": {
+    "name": "Your name",
+    "profile": ""
+  },
+  "levels": [
+    {
+      "id": "bloodbath",
+      "name": "Bloodbath",
+      "creator": "Riot",
+      "difficulty": "Extreme Demon",
+      "song": "At the Speed of Light",
+      "bestPercent": 42,
+      "description": "Add any extra information about your progress here.",
+      "runs": [
+        {
+          "percent": 42,
+          "date": "2026-11-01",
+          "type": "Progress",
+          "note": "Example run — replace this with your own."
+        },
+        {
+          "percent": 27,
+          "date": "2026-10-20",
+          "type": "Progress",
+          "note": "Another example run."
+        }
+      ]
+    },
+    {
+      "id": "acu",
+      "name": "Acu",
+      "creator": "Neigefeu",
+      "difficulty": "Extreme Demon",
+      "song": "Sphere",
+      "bestPercent": 18,
+      "description": "",
+      "runs": [
+        {
+          "percent": 18,
+          "date": "2026-10-25",
+          "type": "Progress",
+          "note": "Example run — edit or delete me."
+        }
+      ]
+    }
+  ]
+}
