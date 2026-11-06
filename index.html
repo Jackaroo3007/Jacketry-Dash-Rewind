@@ -65,7 +65,10 @@ h2 {font-size:21px;margin:0}
 .progress-row {display:flex;justify-content:space-between;color:var(--muted);font-size:11px;margin:18px 0 8px}
 .bar {height:12px;background:#080b17;border:1px solid rgba(160,180,255,.2);border-radius:999px;position:relative;overflow:hidden;isolation:isolate}
 .bar-runs {position:absolute;inset:0;border-radius:inherit;overflow:hidden}
-.bar-run {position:absolute;top:0;bottom:0;min-width:0;border-radius:0;background:#ffb84d}
+ .bar-run {position:absolute;top:0;bottom:0;min-width:0;border-radius:0;background:#ffb84d}
+.bar-run-zero {background:#ffb84d}
+.bar-run-progress {background:#8b6cff}
+
 .bar-legend {display:flex;justify-content:space-between;color:var(--muted);font-size:10px;margin-top:7px}
 .card-bottom {display:flex;justify-content:space-between;color:var(--muted);font-size:11px;margin-top:14px}
 .empty {color:var(--muted);padding:35px;text-align:center;border:1px dashed var(--line);border-radius:var(--radius);grid-column:1/-1}
@@ -81,6 +84,7 @@ h2 {font-size:21px;margin:0}
 .run-list {display:grid;gap:10px}
 .run {display:grid;grid-template-columns:85px 1fr auto;align-items:center;gap:13px;background:#0c1020;border:1px solid var(--line);padding:13px;border-radius:12px}
 .run-range {font-size:18px;font-weight:850;white-space:nowrap}
+.run-amount {display:inline-block;margin-left:5px;color:#ff8bb0;font-size:13px;font-weight:900;vertical-align:2px}
 .run-date {color:var(--muted);font-size:11px;margin-top:3px}
 .run-note {color:#c4cbe2;font-size:12px}
 .run-type {color:var(--cyan);font-size:10px;font-weight:800;text-transform:uppercase}
@@ -177,17 +181,16 @@ function getBest(level) {
 }
 
 function runRangeLabel(run) {
-  const start = runStart(run);
-  const end = runEnd(run);
-  const amount = run.Amount ?? 1;
-
-  const range = start === 0 ? `${end}%` : `${start}-${end}%`;
-
-  return amount > 1 ? `${range} x${amount}` : range;
+  const start=runStart(run);
+  const end=runEnd(run);
+  const range=start===0 ? `${end}%` : `${start}-${end}%`;
+  const amount=Math.max(1,Number(run.amount)||1);
+  return amount>1 ? `${range} <span class="run-amount">x${amount}</span>` : range;
 }
 
 function renderRunBar(runs) {
-  const bestRun=(runs||[])
+  const allRuns=runs||[];
+  const bestRun=allRuns
     .filter(run=>runStart(run)===0)
     .reduce((best,run)=>!best||runEnd(run)>runEnd(best)?run:best,null);
 
@@ -195,13 +198,30 @@ function renderRunBar(runs) {
     ?Math.max(0,Math.min(100,runEnd(bestRun)))
     :0;
 
+  const progressRuns=allRuns
+    .filter(run=>runStart(run)>0&&runEnd(run)>runStart(run)&&runStart(run)>=progress)
+    .sort((a,b)=>runStart(a)-runStart(b)||runEnd(b)-runEnd(a));
+
+  const visibleRuns=[];
+  let lastEnd=progress;
+
+  progressRuns.forEach(run=>{
+    const start=runStart(run);
+    const end=Math.min(100,runEnd(run));
+    if(start>=lastEnd&&end>start) {
+      visibleRuns.push({start,end,amount:Math.max(1,Number(run.amount)||1)});
+      lastEnd=end;
+    }
+  });
+
   return `
-    <div class="bar" role="img" aria-label="Best run starting from zero: ${progress}%">
+    <div class="bar" role="img" aria-label="Best run from zero: ${progress}%. Other non-overlapping progress runs are also shown.">
       <div class="bar-runs">
-        ${progress>0?`<span class="bar-run" title="Best run from 0% to ${progress}%" style="left:0;width:${progress}%"></span>`:""}
+        ${progress>0?`<span class="bar-run bar-run-zero" title="Best run from 0% to ${progress}%" style="left:0;width:${progress}%"></span>`:""}
+        ${visibleRuns.map(run=>`<span class="bar-run bar-run-progress" title="Progress run: ${run.start}-${run.end}%${run.amount>1?` (x${run.amount})`:''}" style="left:${run.start}%;width:${run.end-run.start}%"></span>`).join("")}
       </div>
     </div>
-    <div class="bar-legend"><span>0%</span><span>${progress}% best</span><span>100%</span></div>
+    <div class="bar-legend"><span>0%</span><span>${progress}% best from 0</span><span>100%</span></div>
   `;
 }
 
@@ -323,7 +343,7 @@ function showLevel(id) {
     <div class="panel" style="margin-bottom:15px">
       <h3>Progress runs</h3>
       ${renderRunBar(runs)}
-      <div class="section-note">Only your best run starting from 0% is shown here. Other runs remain available in your run history.</div>
+      <div class="section-note">Your best run from 0% is gold. Other non-overlapping progress runs are purple.</div>
     </div>
 
     <div class="panel">
@@ -335,7 +355,6 @@ function showLevel(id) {
               <div>
                 <div class="run-range">${runRangeLabel(run)}</div>
                 <div class="run-date">${formatDate(String(run.date||""))}</div>
-              
               </div>
               <div>
                 <div class="run-note">${escapeHTML(run.note||"No notes for this run")}</div>
