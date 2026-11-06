@@ -63,30 +63,9 @@ h2 {font-size:21px;margin:0}
 .level-name {font-size:19px;font-weight:800;margin:15px 0 5px}
 .level-creator {color:var(--muted);font-size:12px}
 .progress-row {display:flex;justify-content:space-between;color:var(--muted);font-size:11px;margin:18px 0 8px}
-.bar {
-  height:12px;
-  background:#080b17;
-  border:1px solid rgba(160,180,255,.2);
-  border-radius:999px;
-  position:relative;
-  overflow:hidden;
-  isolation:isolate;
-}
-.bar-runs {
-  position:absolute;
-  inset:0;
-  overflow:hidden;
-  border-radius:inherit;
-}
-.bar-run {
-  position:absolute;
-  top:0;
-  bottom:0;
-  min-width:0;
-  border-radius:0;
-  background:#8b6cff;
-}
-.bar-run.overlap {background:#4de4e8}
+.bar {height:12px;background:#080b17;border:1px solid rgba(160,180,255,.2);border-radius:999px;position:relative;overflow:hidden;isolation:isolate}
+.bar-runs {position:absolute;inset:0;border-radius:inherit;overflow:hidden}
+.bar-run {position:absolute;top:0;bottom:0;min-width:0;border-radius:0;background:#ffb84d}
 .bar-legend {display:flex;justify-content:space-between;color:var(--muted);font-size:10px;margin-top:7px}
 .card-bottom {display:flex;justify-content:space-between;color:var(--muted);font-size:11px;margin-top:14px}
 .empty {color:var(--muted);padding:35px;text-align:center;border:1px dashed var(--line);border-radius:var(--radius);grid-column:1/-1}
@@ -138,7 +117,7 @@ footer {color:#66708e;text-align:center;font-size:11px;margin-top:48px}
 
 <section id="home">
   <div class="eyebrow">Geometry Dash · Progress archive</div>
-  <h1><span style="color:#a88cff">Jack's progress.</span></h1>
+  <h1>Your runs.<br><span style="color:#a88cff">Jack's progress.</span></h1>
   <p class="intro">A place to keep track of Jack's Geometry Dash progress, best runs and milestones. Pick a level to explore its full run history. Please note that AI was used to create this with the plans of making this less and less AI induced every update. This is because I just wanted a nice looking tracker instead of some shitty coded html page. As updates go along the website will become more coded manually as i learn :)</p>
 
   <div class="stats-grid" id="overviewStats"></div>
@@ -204,35 +183,21 @@ function runRangeLabel(run) {
 }
 
 function renderRunBar(runs) {
-  const validRuns=(runs||[]).map(run=>({
-    start:Math.max(0,Math.min(100,runStart(run))),
-    end:Math.max(0,Math.min(100,runEnd(run)))
-  })).filter(run=>run.end>run.start);
+  const bestRun=(runs||[])
+    .filter(run=>runStart(run)===0)
+    .reduce((best,run)=>!best||runEnd(run)>runEnd(best)?run:best,null);
 
-  const boundaries=[...new Set(validRuns.flatMap(run=>[run.start,run.end]))].sort((a,b)=>a-b);
-  const segments=[];
-
-  for(let i=0;i<boundaries.length-1;i++) {
-    const start=boundaries[i];
-    const end=boundaries[i+1];
-    const middle=(start+end)/2;
-    const active=validRuns.filter(run=>middle>=run.start&&middle<run.end).length;
-    if(!active) continue;
-
-    segments.push(`
-      <span
-        class="bar-run${active>1?" overlap":""}"
-        title="${start.toFixed(2)}-${end.toFixed(2)}% · ${active} overlapping run${active===1?"":"s"}"
-        style="left:${start}%;width:${end-start}%"
-      ></span>
-    `);
-  }
+  const progress=bestRun
+    ?Math.max(0,Math.min(100,runEnd(bestRun)))
+    :0;
 
   return `
-    <div class="bar" role="img" aria-label="Recorded progress runs; cyan sections show overlapping runs">
-      <div class="bar-runs">${segments.join("")}</div>
+    <div class="bar" role="img" aria-label="Best run starting from zero: ${progress}%">
+      <div class="bar-runs">
+        ${progress>0?`<span class="bar-run" title="Best run from 0% to ${progress}%" style="left:0;width:${progress}%"></span>`:""}
+      </div>
     </div>
-    <div class="bar-legend"><span>0%</span><span>100%</span></div>
+    <div class="bar-legend"><span>0%</span><span>${progress}% best</span><span>100%</span></div>
   `;
 }
 
@@ -253,7 +218,7 @@ function renderHome() {
   const levels=trackerData.levels;
   const completed=levels.filter(level=>level.completed===true).length;
   const totalRuns=levels.reduce((sum,level)=>sum+(level.runs||[]).length,0);
-
+  
   const stats=[
     ["LEVELS TRACKED",levels.length],
     ["TOTAL RUNS",totalRuns],
@@ -354,7 +319,7 @@ function showLevel(id) {
     <div class="panel" style="margin-bottom:15px">
       <h3>Progress runs</h3>
       ${renderRunBar(runs)}
-      <div class="section-note">Purple shows a section covered by one run. Cyan shows where two or more runs overlap; the colour switches exactly where the overlap starts and ends.</div>
+      <div class="section-note">Only your best run starting from 0% is shown here. Other runs remain available in your run history.</div>
     </div>
 
     <div class="panel">
