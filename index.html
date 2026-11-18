@@ -83,6 +83,19 @@
     .cores-top { display: flex; justify-content: space-between; gap: 10px; align-items: center; }
     .cores-top strong { color: var(--gold); font-size: 1.2rem; }
     .cores-box p { margin: 7px 0 12px; color: #c4b996; font-size: .78rem; line-height: 1.45; }
+    .research-tree { margin-top: 18px; padding: 16px; border: 1px solid #315459; background: #0a1a22; }
+    .research-tree h3 { margin: 0 0 5px; font-size: .95rem; }
+    .research-tree > p { margin: 0 0 12px; color: var(--muted); font-size: .75rem; line-height: 1.45; }
+    .tree-grid { display: grid; gap: 8px; }
+    .research-node { position: relative; width: 100%; padding: 11px 12px; border: 1px solid #31535a; background: #102831; color: #deefeb; text-align: left; cursor: pointer; }
+    .research-node:not(:last-child):after { content: ""; position: absolute; left: 19px; bottom: -9px; z-index: 1; height: 9px; border-left: 1px solid #4a7775; }
+    .research-node strong, .research-node span, .research-node small { display: block; }
+    .research-node strong { font-size: .8rem; }
+    .research-node span { margin-top: 4px; color: #a6c7c0; font-size: .72rem; }
+    .research-node small { margin-top: 4px; color: #718f8d; font-size: .68rem; }
+    .research-node.unlocked { border-color: #64b996; background: #15372f; }
+    .research-node:disabled { cursor: default; }
+    .advanced-upgrade[hidden] { display: none; }
     .core-buy { width: 100%; border-color: #827049; background: #4a3c25; }
     .core-buy:hover:not(:disabled) { border-color: var(--gold); background: #65502e; }
     .map-panel { margin-top: 18px; padding: 20px 22px; }
@@ -195,6 +208,31 @@
           <p>Each core boosts all research output by 12%. Cores survive every descent.</p>
           <button class="upgrade-button core-buy" id="buyCore">Calibrate a core<span id="coreCost">Cost: 5 cores · +25% output</span><span class="estimate" id="coreEta">Earn cores by descending</span></button>
         </div>
+        <section class="research-tree" aria-labelledby="researchTitle">
+          <h3 id="researchTitle">Research tree</h3>
+          <p>Spend permanent cores to unlock powerful improvements. Research survives every descent.</p>
+          <div class="tree-grid">
+            <button class="research-node" id="researchPressure" type="button">
+              <strong>Pressure Mathematics</strong><span id="pressureStatus">2 cores</span><small>Multiply all research output by 1.15×</small>
+            </button>
+            <button class="research-node" id="researchLabs" type="button">
+              <strong>Autonomous Labs</strong><span id="labsResearchStatus">3 cores · requires Pressure Mathematics</span><small>Double lab output; unlock Deep Labs</small>
+            </button>
+            <button class="research-node" id="researchAbyssal" type="button">
+              <strong>Abyssal Engineering</strong><span id="abyssalStatus">5 cores · requires Autonomous Labs</span><small>Multiply output by 1.25×; unlock Deep Survey Subs</small>
+            </button>
+          </div>
+        </section>
+
+        <div class="upgrade advanced-upgrade" id="deepLabUpgrade" hidden>
+          <div><h3>Deep Lab <span class="upgrade-count" id="deepLabCount">0</span></h3><p>Pressure-rated autonomous research.<br>+8 data per second</p></div>
+          <button class="upgrade-button" id="buyDeepLab">Build deep lab<span id="deepLabCost">250 data</span><span class="estimate" id="deepLabEta">Calculating…</span></button>
+        </div>
+        <div class="upgrade advanced-upgrade" id="deepSubUpgrade" hidden>
+          <div><h3>Deep Survey Sub <span class="upgrade-count" id="deepSubCount">0</span></h3><p>Built for the trench floor.<br>+24 data per second</p></div>
+          <button class="upgrade-button" id="buyDeepSub">Launch deep sub<span id="deepSubCost">1,000 data</span><span class="estimate" id="deepSubEta">Calculating…</span></button>
+        </div>
+
         <div class="save-tools">
           <button type="button" id="exportSave">Export save (.json)</button>
           <label for="importSave">Import save (.json)</label>
@@ -239,7 +277,12 @@
         { name: "Abyssal Plain", depth: "4,500 m", cost: 16000, copy: "A vast, quiet plain stretches beyond the reach of daylight.", caption: "An ocean without a horizon" },
         { name: "Hadal Trench", depth: "8,000 m", cost: 120000, copy: "The trench walls close in. Every discovery changes the mission.", caption: "Pressure rising" }
       ];
-      const freshState = () => ({ depth: 0, data: 0, labs: 0, subs: 0, cores: 0, coreLevels: 0, lastTick: Date.now() });
+      const freshState = () => ({ depth: 0, data: 0, labs: 0, subs: 0, advancedLabs: 0, deepSubs: 0, cores: 0, coreLevels: 0, research: [], lastTick: Date.now() });
+      const RESEARCH = [
+        { id: "pressure", button: "researchPressure", status: "pressureStatus", cost: 2, requires: null },
+        { id: "labs", button: "researchLabs", status: "labsResearchStatus", cost: 3, requires: "pressure" },
+        { id: "abyssal", button: "researchAbyssal", status: "abyssalStatus", cost: 5, requires: "labs" }
+      ];
       let state = banned ? freshState() : loadState();
       let lastFrame = Date.now();
       let lastSave = lastFrame;
@@ -269,6 +312,9 @@
           Number.isInteger(payload.subs) && payload.subs >= 0 &&
           Number.isInteger(payload.cores) && payload.cores >= 0 &&
           Number.isInteger(payload.coreLevels) && payload.coreLevels >= 0 &&
+          (payload.research === undefined || (Array.isArray(payload.research) && payload.research.every(id => ["pressure", "labs", "abyssal"].includes(id)))) &&
+          (payload.advancedLabs === undefined || (Number.isInteger(payload.advancedLabs) && payload.advancedLabs >= 0)) &&
+          (payload.deepSubs === undefined || (Number.isInteger(payload.deepSubs) && payload.deepSubs >= 0)) &&
           Number.isFinite(payload.lastTick);
       }
 
@@ -288,8 +334,11 @@
             data: Math.max(0, raw.data),
             labs: Math.max(0, Math.floor(raw.labs || 0)),
             subs: Math.max(0, Math.floor(raw.subs || 0)),
+            advancedLabs: Math.max(0, Math.floor(raw.advancedLabs || 0)),
+            deepSubs: Math.max(0, Math.floor(raw.deepSubs || 0)),
             cores: Math.max(0, Math.floor(raw.cores || 0)),
             coreLevels: Math.max(0, Math.floor(raw.coreLevels || 0)),
+            research: Array.isArray(raw.research) ? [...new Set(raw.research)] : [],
             lastTick: Number.isFinite(raw.lastTick) ? raw.lastTick : Date.now()
           };
           const offlineSeconds = Math.min(8 * 60 * 60, Math.max(0, (Date.now() - saved.lastTick) / 1000));
@@ -315,21 +364,58 @@
         };
       }
 
+      function hasResearch(source, id) {
+        return Array.isArray(source.research) && source.research.includes(id);
+      }
+
       function rateFor(source) {
-        return (0.4 + source.labs * 0.6 + source.subs * 2) *
-          (1 + source.depth * 0.42) *
+        const labRate = hasResearch(source, "labs") ? 1.2 : 0.6;
+        let base = 0.4 + source.labs * labRate + source.subs * 2 +
+          (source.advancedLabs || 0) * 8 + (source.deepSubs || 0) * 24;
+        let multiplier = (1 + source.depth * 0.42) *
           (1 + source.cores * 0.12 + source.coreLevels * 0.25);
+        if (hasResearch(source, "pressure")) multiplier *= 1.15;
+        if (hasResearch(source, "abyssal")) multiplier *= 1.25;
+        return base * multiplier;
       }
 
       function labCost() { return Math.ceil(10 * Math.pow(1.55, state.labs)); }
       function subCost() { return Math.ceil(35 * Math.pow(1.7, state.subs)); }
+      function deepLabCost() { return Math.ceil(250 * Math.pow(1.9, state.advancedLabs)); }
+      function deepSubCost() { return Math.ceil(1000 * Math.pow(2.1, state.deepSubs)); }
 
       function format(value) {
-        if (value < 1000) return Math.floor(value).toLocaleString();
+        if (value < 1000) return value.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
         const units = ["K", "M", "B", "T", "Qa", "Qi"];
         let unit = -1;
         while (value >= 1000 && unit < units.length - 1) { value /= 1000; unit += 1; }
-        return value.toFixed(value < 10 ? 2 : value < 100 ? 1 : 0) + units[unit];
+        return value.toFixed(1) + units[unit];
+      }
+
+      const numberFrames = {};
+      function tweenNumber(id, target) {
+        const element = document.getElementById(id);
+        const prior = Number(element.dataset.numericValue);
+        if (!Number.isFinite(prior)) {
+          element.dataset.numericValue = String(target);
+          element.textContent = format(target);
+          return;
+        }
+        if (Math.abs(prior - target) < 0.005) return;
+        if (numberFrames[id]) cancelAnimationFrame(numberFrames[id]);
+        const startValue = prior;
+        const startTime = performance.now();
+        const duration = 220;
+        function frame(now) {
+          const progress = Math.min(1, (now - startTime) / duration);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          const value = startValue + (target - startValue) * eased;
+          element.dataset.numericValue = String(value);
+          element.textContent = format(value);
+          if (progress < 1) numberFrames[id] = requestAnimationFrame(frame);
+          else { element.dataset.numericValue = String(target); numberFrames[id] = 0; }
+        }
+        numberFrames[id] = requestAnimationFrame(frame);
       }
 
       function announce(message) {
@@ -392,8 +478,8 @@
         document.getElementById("zoneCopy").textContent = zone.copy;
         document.getElementById("depthValue").textContent = zone.depth;
         document.getElementById("windowCaption").textContent = zone.caption;
-        document.getElementById("dataValue").textContent = format(state.data);
-        document.getElementById("rateValue").textContent = format(rate);
+        tweenNumber("dataValue", state.data);
+        tweenNumber("rateValue", rate);
         document.getElementById("progressFill").style.width = progress + "%";
         document.getElementById("progressBar").setAttribute("aria-valuenow", String(Math.floor(progress)));
         document.getElementById("progressValue").textContent = format(state.data) + " / " + format(zone.cost) + " data";
@@ -402,17 +488,37 @@
         document.getElementById("diveHint").textContent = "Requires " + format(zone.cost) + " research data · earns " + (1 + Math.floor(state.depth / 2)) + " research core" + (state.depth > 1 ? "s" : "");
         document.getElementById("diveButton").disabled = state.data < zone.cost || banned;
         setEstimate("diveEta", zone.cost, rate);
-        document.getElementById("labCount").textContent = state.labs;
-        document.getElementById("subCount").textContent = state.subs;
+        tweenNumber("labCount", state.labs);
+        tweenNumber("subCount", state.subs);
         document.getElementById("labCost").textContent = format(labCost()) + " data";
         document.getElementById("subCost").textContent = format(subCost()) + " data";
         document.getElementById("buyLab").disabled = state.data < labCost() || banned;
         document.getElementById("buySub").disabled = state.data < subCost() || banned;
         setEstimate("labEta", labCost(), rate);
         setEstimate("subEta", subCost(), rate);
-        document.getElementById("coreCount").textContent = state.cores;
+        tweenNumber("coreCount", state.cores);
         document.getElementById("coreCost").textContent = "Cost: 5 cores · +" + (state.coreLevels + 1) * 25 + "% output";
         document.getElementById("buyCore").disabled = state.cores < 5 || banned;
+        const researchLookup = Object.fromEntries(RESEARCH.map(node => [node.id, node]));
+        for (const node of RESEARCH) {
+          const unlocked = hasResearch(state, node.id);
+          const prerequisiteMet = !node.requires || hasResearch(state, node.requires);
+          const button = document.getElementById(node.button);
+          button.classList.toggle("unlocked", unlocked);
+          button.disabled = banned || unlocked || !prerequisiteMet || state.cores < node.cost;
+          const status = document.getElementById(node.status);
+          status.textContent = unlocked ? "UNLOCKED" : (node.cost + " cores" + (node.requires ? " · requires " + researchLookup[node.requires].id : ""));
+        }
+        document.getElementById("deepLabUpgrade").hidden = !hasResearch(state, "labs");
+        document.getElementById("deepSubUpgrade").hidden = !hasResearch(state, "abyssal");
+        tweenNumber("deepLabCount", state.advancedLabs);
+        tweenNumber("deepSubCount", state.deepSubs);
+        document.getElementById("deepLabCost").textContent = format(deepLabCost()) + " data";
+        document.getElementById("deepSubCost").textContent = format(deepSubCost()) + " data";
+        document.getElementById("buyDeepLab").disabled = banned || state.data < deepLabCost();
+        document.getElementById("buyDeepSub").disabled = banned || state.data < deepSubCost();
+        setEstimate("deepLabEta", deepLabCost(), rate);
+        setEstimate("deepSubEta", deepSubCost(), rate);
         const nextCoreReward = 1 + Math.floor(state.depth / 2);
         document.getElementById("coreEta").textContent = state.cores >= 5 ? "Ready now" : "Next descent earns " + nextCoreReward + " core" + (nextCoreReward === 1 ? "" : "s");
         document.getElementById("resetButton").disabled = banned;
@@ -451,19 +557,49 @@
           state.data -= cost;
           state.labs += 1;
           announce("Research lab online. Output increased.");
-        } else {
+        } else if (kind === "sub") {
           const cost = subCost();
           if (state.data < cost) return;
           state.data -= cost;
           state.subs += 1;
           announce("Survey submersible launched. Samples are on the way.");
+        } else if (kind === "deepLab") {
+          const cost = deepLabCost();
+          if (state.data < cost || !hasResearch(state, "labs")) return;
+          state.data -= cost;
+          state.advancedLabs += 1;
+          announce("Deep lab online. Output increased.");
+        } else if (kind === "deepSub") {
+          const cost = deepSubCost();
+          if (state.data < cost || !hasResearch(state, "abyssal")) return;
+          state.data -= cost;
+          state.deepSubs += 1;
+          announce("Deep survey sub launched.");
         }
+        render();
+        save();
+      }
+
+      function unlockResearch(id) {
+        const node = RESEARCH.find(item => item.id === id);
+        if (!node || banned || hasResearch(state, id) ||
+            (node.requires && !hasResearch(state, node.requires)) || state.cores < node.cost) return;
+        state.cores -= node.cost;
+        state.research.push(id);
+        announce(node.id === "pressure" ? "Pressure Mathematics unlocked. Output multiplied by 1.15×." :
+          node.id === "labs" ? "Autonomous Labs unlocked. Deep Labs are now available." :
+          "Abyssal Engineering unlocked. Output multiplied by 1.25× and Deep Survey Subs are available.");
         render();
         save();
       }
 
       document.getElementById("buyLab").addEventListener("click", () => buy("lab"));
       document.getElementById("buySub").addEventListener("click", () => buy("sub"));
+      document.getElementById("buyDeepLab").addEventListener("click", () => buy("deepLab"));
+      document.getElementById("buyDeepSub").addEventListener("click", () => buy("deepSub"));
+      for (const node of RESEARCH) {
+        document.getElementById(node.button).addEventListener("click", () => unlockResearch(node.id));
+      }
       document.getElementById("buyCore").addEventListener("click", () => {
         if (state.cores < 5) return;
         state.cores -= 5;
@@ -481,6 +617,8 @@
         state.data = 0;
         state.labs = 0;
         state.subs = 0;
+        state.advancedLabs = 0;
+        state.deepSubs = 0;
         announce("Expedition descended. +" + earned + " permanent research core" + (earned === 1 ? "" : "s") + " secured.");
         render();
         save();
