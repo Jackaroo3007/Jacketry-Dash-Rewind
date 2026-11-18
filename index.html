@@ -241,8 +241,7 @@
 
         <div class="cores-box">
           <div class="cores-top"><span class="section-label">Permanent research cores</span><strong id="coreCount">0</strong></div>
-          <p>Each core boosts all research output by 12%. Cores survive every descent.</p>
-          <button class="upgrade-button core-buy" id="buyCore">Calibrate a core<span id="coreCost">Cost: 5 cores · +25% output</span><span class="estimate" id="coreEta">Earn cores by descending</span></button>
+          <p>Spend cores on any open path in the Research Tree. Cores survive dives and Expedition Rebirths.</p>
         </div>
         <section class="research-tree" aria-labelledby="researchTitle">
           <h3 id="researchTitle">Research tree</h3>
@@ -316,7 +315,7 @@
         { name: "Abyssal Plain", depth: "4,500 m", cost: 5500, copy: "A vast, quiet plain stretches beyond the reach of daylight.", caption: "An ocean without a horizon" },
         { name: "Hadal Trench", depth: "8,000 m", cost: 22000, copy: "The trench walls close in. Every discovery changes the mission.", caption: "Pressure rising" }
       ];
-      const freshState = () => ({ depth: 0, data: 0, labs: 0, subs: 0, advancedLabs: 0, deepSubs: 0, cores: 0, coreLevels: 0, research: [], fieldNotes: 0, rebirths: 0, archiveSeals: 0, archiveAscensions: 0, lastTick: Date.now() });
+      const freshState = () => ({ depth: 0, data: 0, labs: 0, subs: 0, advancedLabs: 0, deepSubs: 0, cores: 0, research: [], fieldNotes: 0, rebirths: 0, archiveSeals: 0, archiveAscensions: 0, lastTick: Date.now() });
       const RESEARCH = [
         { id: "pressure", label: "Pressure Mathematics", button: "researchPressure", status: "pressureStatus", cost: 2, requires: null },
         { id: "labs", label: "Autonomous Labs", button: "researchLabs", status: "labsResearchStatus", cost: 3, requires: null },
@@ -350,7 +349,6 @@
           Number.isInteger(payload.labs) && payload.labs >= 0 &&
           Number.isInteger(payload.subs) && payload.subs >= 0 &&
           Number.isInteger(payload.cores) && payload.cores >= 0 &&
-          Number.isInteger(payload.coreLevels) && payload.coreLevels >= 0 &&
           (payload.research === undefined || (Array.isArray(payload.research) && payload.research.every(id => ["pressure", "labs", "abyssal"].includes(id)))) &&
           (payload.advancedLabs === undefined || (Number.isInteger(payload.advancedLabs) && payload.advancedLabs >= 0)) &&
           (payload.deepSubs === undefined || (Number.isInteger(payload.deepSubs) && payload.deepSubs >= 0)) &&
@@ -380,7 +378,6 @@
             advancedLabs: Math.max(0, Math.floor(raw.advancedLabs || 0)),
             deepSubs: Math.max(0, Math.floor(raw.deepSubs || 0)),
             cores: Math.max(0, Math.floor(raw.cores || 0)),
-            coreLevels: Math.max(0, Math.floor(raw.coreLevels || 0)),
             research: Array.isArray(raw.research) ? [...new Set(raw.research)] : [],
             fieldNotes: Math.max(0, Math.floor(raw.fieldNotes || 0)),
             rebirths: Math.max(0, Math.floor(raw.rebirths || 0)),
@@ -420,7 +417,7 @@
         let base = 0.4 + source.labs * labRate + source.subs * 2 +
           (source.advancedLabs || 0) * 8 + (source.deepSubs || 0) * 24;
         let multiplier = (1 + source.depth * 0.42) *
-          (1 + source.cores * 0.12 + source.coreLevels * 0.25) *
+          (1 + source.cores * 0.12) *
           (1 + (source.fieldNotes || 0) * 0.65) *
           Math.pow(3, source.archiveSeals || 0);
         if (hasResearch(source, "pressure")) multiplier *= 1.15;
@@ -559,8 +556,6 @@
         setEstimate("labEta", labCost(), rate);
         setEstimate("subEta", subCost(), rate);
         tweenNumber("coreCount", state.cores);
-        document.getElementById("coreCost").textContent = "Cost: 5 cores · +" + (state.coreLevels + 1) * 25 + "% output";
-        document.getElementById("buyCore").disabled = state.cores < 5 || banned;
         for (const node of RESEARCH) {
           const unlocked = hasResearch(state, node.id);
           const button = document.getElementById(node.button);
@@ -659,14 +654,6 @@
       for (const node of RESEARCH) {
         document.getElementById(node.button).addEventListener("click", () => unlockResearch(node.id));
       }
-      document.getElementById("buyCore").addEventListener("click", () => {
-        if (state.cores < 5) return;
-        state.cores -= 5;
-        state.coreLevels += 1;
-        announce("Core calibrated. All future research is faster.");
-        render();
-        save();
-      });
       document.getElementById("diveButton").addEventListener("click", () => {
         const zone = zoneAt(state.depth);
         if (banned || state.data < zone.cost) return;
