@@ -72,6 +72,12 @@
     .upgrade-count { display: inline-block; min-width: 27px; margin-left: 5px; padding: 2px 6px; border: 1px solid #31575b; color: var(--aqua); font-size: .73rem; text-align: center; }
     .upgrade-button { min-width: 112px; padding: 10px; text-align: center; font-size: .8rem; font-weight: 750; }
     .upgrade-button span { display: block; margin-top: 3px; color: #b1d1c5; font-size: .7rem; font-weight: 500; }
+    .upgrade-button .estimate { color: var(--mint); }
+    .save-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+    .save-tools button, .save-tools label { display: block; padding: 10px; border: 1px solid #3c6968; background: #112e34; color: #c8eee3; cursor: pointer; font-size: .78rem; text-align: center; }
+    .save-tools button:hover, .save-tools label:hover { border-color: var(--mint); background: #194044; }
+    .integrity-note { grid-column: 1 / -1; margin: 0; color: #829b99; font-size: .7rem; line-height: 1.45; }
+    .ban-banner { margin: -7px 0 18px; padding: 12px 15px; border: 1px solid #a85d54; background: #381d20; color: #ffd5cc; font-size: .85rem; line-height: 1.5; }
     .cores-box { margin-top: 15px; padding: 15px; border: 1px solid #63563b; background: #29271d; }
     .cores-top { display: flex; justify-content: space-between; gap: 10px; align-items: center; }
     .cores-top strong { color: var(--gold); font-size: 1.2rem; }
@@ -121,6 +127,7 @@
       </div>
       <div class="header-note">An idle expedition<br>to the ocean floor</div>
     </header>
+    <div class="ban-banner" id="banBanner" role="alert" hidden>Save integrity check failed. This browser is locked from play. This local-only check cannot ban an account across devices.</div>
 
     <div class="layout">
       <main class="panel main-panel">
@@ -150,7 +157,7 @@
         <div class="progress-track" role="progressbar" aria-label="Progress toward next descent" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progressBar">
           <div class="progress-fill" id="progressFill"></div>
         </div>
-        <div class="progress-copy"><span id="progressLabel">Next descent</span><span id="progressValue">0 / 100 data</span></div>
+        <div class="progress-copy"><span id="progressLabel">Data needed to descend</span><span id="progressValue">0 / 100 data</span><span id="diveEta">Calculating time…</span></div>
         <button class="dive-button" id="diveButton" disabled>
           <span id="diveTitle">DESCEND TO TWILIGHT REACH</span>
           <small id="diveHint">Requires 100 research data · earns 1 research core</small>
@@ -168,20 +175,26 @@
             <h3>Research lab <span class="upgrade-count" id="labCount">0</span></h3>
             <p>Careful analysis, around the clock.<br>+0.6 data per second</p>
           </div>
-          <button class="upgrade-button" id="buyLab">Build lab<span id="labCost">10 data</span></button>
+          <button class="upgrade-button" id="buyLab">Build lab<span id="labCost">10 data</span><span class="estimate" id="labEta">Calculating…</span></button>
         </div>
         <div class="upgrade">
           <div>
             <h3>Survey submersible <span class="upgrade-count" id="subCount">0</span></h3>
             <p>Bring back samples from the dark.<br>+2 data per second</p>
           </div>
-          <button class="upgrade-button" id="buySub">Launch sub<span id="subCost">35 data</span></button>
+          <button class="upgrade-button" id="buySub">Launch sub<span id="subCost">35 data</span><span class="estimate" id="subEta">Calculating…</span></button>
         </div>
 
         <div class="cores-box">
           <div class="cores-top"><span class="section-label">Permanent research cores</span><strong id="coreCount">0</strong></div>
           <p>Each core boosts all research output by 12%. Cores survive every descent.</p>
-          <button class="upgrade-button core-buy" id="buyCore">Calibrate a core<span id="coreCost">Cost: 5 cores · +25% output</span></button>
+          <button class="upgrade-button core-buy" id="buyCore">Calibrate a core<span id="coreCost">Cost: 5 cores · +25% output</span><span class="estimate" id="coreEta">Earn cores by descending</span></button>
+        </div>
+        <div class="save-tools">
+          <button type="button" id="exportSave">Export save (.json)</button>
+          <label for="importSave">Import save (.json)</label>
+          <input id="importSave" type="file" accept="application/json,.json" hidden>
+          <p class="integrity-note">Save checks catch edited or damaged files in this browser. Because this game runs locally, the check is not server-secure and cannot enforce an account-wide ban.</p>
         </div>
       </aside>
     </div>
@@ -199,6 +212,8 @@
   <script>
     (() => {
       const SAVE_KEY = "deep-signal-idle-v1";
+      const BAN_KEY = "deep-signal-local-lock-v1";
+      let banned = localStorage.getItem(BAN_KEY) === "locked";
       const ZONES = [
         { name: "Sunlit Shelf", depth: "200 m", cost: 100, copy: "A calm beginning. Set up your first research station.", caption: "Light reaches the seafloor" },
         { name: "Twilight Reach", depth: "900 m", cost: 450, copy: "Blue light fades. Strange signals drift up from below.", caption: "The last blue light" },
@@ -207,15 +222,48 @@
         { name: "Hadal Trench", depth: "8,000 m", cost: 120000, copy: "The trench walls close in. Every discovery changes the mission.", caption: "Pressure rising" }
       ];
       const freshState = () => ({ depth: 0, data: 0, labs: 0, subs: 0, cores: 0, coreLevels: 0, lastTick: Date.now() });
-      let state = loadState();
+      let state = banned ? freshState() : loadState();
       let lastFrame = Date.now();
       let lastSave = lastFrame;
       let noticeTimer = 0;
 
+      function checksum(payload) {
+        const text = JSON.stringify(payload);
+        let hash = 2166136261;
+        for (let i = 0; i < text.length; i++) {
+          hash ^= text.charCodeAt(i);
+          hash = Math.imul(hash, 16777619);
+        }
+        return ("00000000" + (hash >>> 0).toString(16)).slice(-8);
+      }
+
+      function lockForTampering() {
+        banned = true;
+        try { localStorage.setItem(BAN_KEY, "locked"); } catch {}
+        return freshState();
+      }
+
+      function isValidPayload(payload) {
+        return payload && Number.isInteger(payload.depth) && payload.depth >= 0 &&
+          Number.isFinite(payload.data) && payload.data >= 0 &&
+          Number.isInteger(payload.labs) && payload.labs >= 0 &&
+          Number.isInteger(payload.subs) && payload.subs >= 0 &&
+          Number.isInteger(payload.cores) && payload.cores >= 0 &&
+          Number.isInteger(payload.coreLevels) && payload.coreLevels >= 0 &&
+          Number.isFinite(payload.lastTick);
+      }
+
       function loadState() {
         try {
-          const raw = JSON.parse(localStorage.getItem(SAVE_KEY));
-          if (!raw || !Number.isFinite(raw.data) || !Number.isInteger(raw.depth)) return freshState();
+          const stored = localStorage.getItem(SAVE_KEY);
+          if (!stored) return freshState();
+          let raw = JSON.parse(stored);
+          if (raw && raw.game === "deep-signal" && raw.version === 1 && raw.payload) {
+            if (raw.checksum !== checksum(raw.payload) || !isValidPayload(raw.payload)) return lockForTampering();
+            raw = raw.payload;
+          } else if (!raw || !Number.isFinite(raw.data) || !Number.isInteger(raw.depth)) {
+            return lockForTampering();
+          }
           const saved = {
             depth: Math.max(0, raw.depth),
             data: Math.max(0, raw.data),
@@ -226,16 +274,16 @@
             lastTick: Number.isFinite(raw.lastTick) ? raw.lastTick : Date.now()
           };
           const offlineSeconds = Math.min(8 * 60 * 60, Math.max(0, (Date.now() - saved.lastTick) / 1000));
-          saved.data += rateFor(saved) * offlineSeconds;
+          const offlineData = rateFor(saved) * offlineSeconds;
+          saved.data += offlineData;
           if (offlineSeconds > 5) {
-            setTimeout(() => announce("Welcome back. Your station collected " + format(saved.data - Math.max(0, raw.data)) + " data while you were away."), 250);
+            setTimeout(() => announce("Welcome back. Your station collected " + format(offlineData) + " data while you were away."), 250);
           }
           return saved;
         } catch {
-          return freshState();
+          return lockForTampering();
         }
       }
-
       function zoneAt(depth) {
         if (depth < ZONES.length) return ZONES[depth];
         const extra = depth - ZONES.length + 1;
@@ -273,13 +321,37 @@
       }
 
       function save() {
+        if (banned) return;
         state.lastTick = Date.now();
         try {
-          localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+          const payload = { ...state };
+          const envelope = { game: "deep-signal", version: 1, payload, checksum: checksum(payload) };
+          localStorage.setItem(SAVE_KEY, JSON.stringify(envelope));
           document.getElementById("saveStatus").textContent = "Progress saves in this browser.";
         } catch {
           document.getElementById("saveStatus").textContent = "Browser storage is unavailable; progress may not persist.";
         }
+      }
+
+      function formatDuration(seconds) {
+        if (!Number.isFinite(seconds)) return "a long time";
+        let remaining = Math.max(0, Math.ceil(seconds));
+        if (remaining === 0) return "now";
+        const days = Math.floor(remaining / 86400);
+        remaining %= 86400;
+        const hours = Math.floor(remaining / 3600);
+        remaining %= 3600;
+        const minutes = Math.floor(remaining / 60);
+        const secs = remaining % 60;
+        if (days) return days + "d " + hours + "h";
+        if (hours) return hours + "h " + minutes + "m";
+        if (minutes) return minutes + "m " + secs + "s";
+        return secs + "s";
+      }
+
+      function setEstimate(id, cost, rate) {
+        const remaining = Math.max(0, cost - state.data);
+        document.getElementById(id).textContent = remaining === 0 ? "Ready now" : "Ready in " + formatDuration(remaining / rate);
       }
 
       function render() {
@@ -300,16 +372,26 @@
         document.getElementById("progressLabel").textContent = "Data needed to descend";
         document.getElementById("diveTitle").textContent = "DESCEND TO " + next.name.toUpperCase();
         document.getElementById("diveHint").textContent = "Requires " + format(zone.cost) + " research data · earns " + (1 + Math.floor(state.depth / 2)) + " research core" + (state.depth > 1 ? "s" : "");
-        document.getElementById("diveButton").disabled = state.data < zone.cost;
+        document.getElementById("diveButton").disabled = state.data < zone.cost || banned;
+        setEstimate("diveEta", zone.cost, rate);
         document.getElementById("labCount").textContent = state.labs;
         document.getElementById("subCount").textContent = state.subs;
         document.getElementById("labCost").textContent = format(labCost()) + " data";
         document.getElementById("subCost").textContent = format(subCost()) + " data";
-        document.getElementById("buyLab").disabled = state.data < labCost();
-        document.getElementById("buySub").disabled = state.data < subCost();
+        document.getElementById("buyLab").disabled = state.data < labCost() || banned;
+        document.getElementById("buySub").disabled = state.data < subCost() || banned;
+        setEstimate("labEta", labCost(), rate);
+        setEstimate("subEta", subCost(), rate);
         document.getElementById("coreCount").textContent = state.cores;
         document.getElementById("coreCost").textContent = "Cost: 5 cores · +" + (state.coreLevels + 1) * 25 + "% output";
-        document.getElementById("buyCore").disabled = state.cores < 5;
+        document.getElementById("buyCore").disabled = state.cores < 5 || banned;
+        const nextCoreReward = 1 + Math.floor(state.depth / 2);
+        document.getElementById("coreEta").textContent = state.cores >= 5 ? "Ready now" : "Next descent earns " + nextCoreReward + " core" + (nextCoreReward === 1 ? "" : "s");
+        document.getElementById("resetButton").disabled = banned;
+        document.getElementById("exportSave").disabled = banned;
+        document.getElementById("importSave").disabled = banned;
+        document.getElementById("banBanner").hidden = !banned;
+        if (banned) document.getElementById("saveStatus").textContent = "This browser is locked after a save integrity mismatch.";
         document.getElementById("chartStatus").textContent = state.depth >= ZONES.length ? "Beyond the mapped zones" : (ZONES.length - state.depth) + " zone" + (ZONES.length - state.depth === 1 ? "" : "s") + " ahead";
         const route = document.getElementById("route");
         route.replaceChildren();
@@ -371,6 +453,50 @@
         render();
         save();
       });
+      document.getElementById("exportSave").addEventListener("click", () => {
+        if (banned) return;
+        state.lastTick = Date.now();
+        const payload = { ...state };
+        const envelope = { game: "deep-signal", version: 1, payload, checksum: checksum(payload) };
+        const blob = new Blob([JSON.stringify(envelope, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "deep-signal-save.json";
+        link.click();
+        URL.revokeObjectURL(url);
+        save();
+        announce("Save exported as deep-signal-save.json.");
+      });
+
+      document.getElementById("importSave").addEventListener("change", async event => {
+        if (banned) return;
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+        try {
+          const envelope = JSON.parse(await file.text());
+          if (!envelope || envelope.game !== "deep-signal" || envelope.version !== 1 ||
+              !envelope.payload || envelope.checksum !== checksum(envelope.payload) ||
+              !isValidPayload(envelope.payload)) {
+            lockForTampering();
+            render();
+            return;
+          }
+          state = { ...envelope.payload };
+          const offlineSeconds = Math.min(8 * 60 * 60, Math.max(0, (Date.now() - state.lastTick) / 1000));
+          state.data += rateFor(state) * offlineSeconds;
+          state.lastTick = Date.now();
+          render();
+          save();
+          announce("Save imported successfully.");
+        } catch {
+          lockForTampering();
+          render();
+        } finally {
+          event.target.value = "";
+        }
+      });
+
       document.getElementById("resetButton").addEventListener("click", () => {
         if (!window.confirm("Reset this expedition and erase its browser save?")) return;
         state = freshState();
@@ -381,6 +507,7 @@
 
       window.setInterval(() => {
         const now = Date.now();
+        if (banned) { lastFrame = now; render(); return; }
         const elapsed = Math.min(10, Math.max(0, (now - lastFrame) / 1000));
         lastFrame = now;
         state.data += rateFor(state) * elapsed;
