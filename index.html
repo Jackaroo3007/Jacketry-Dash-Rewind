@@ -3,327 +3,393 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Lucky Roll</title>
+  <meta name="theme-color" content="#07131c">
+  <title>DEEP SIGNAL — Idle Research</title>
   <style>
-    :root { color-scheme: dark; font-family: system-ui, sans-serif; background: #10131d; color: #f5f6fa; }
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: #06121a;
+      color: #e8f4f2;
+      --muted: #91aaa9;
+      --line: #28464a;
+      --panel: #0d2029;
+      --mint: #8af2ce;
+      --aqua: #65d5df;
+      --gold: #f0cd86;
+    }
     * { box-sizing: border-box; }
-    body { min-height: 100vh; margin: 0; display: grid; place-items: center; padding: 24px; background: radial-gradient(ellipse at top, #28345b 0%, transparent 55%), #10131d; }
-    main { width: min(100%, 560px); padding: 28px; border: 1px solid #ffffff20; border-radius: 24px; background: #171b29ef; box-shadow: 0 20px 80px #0008; text-align: center; }
-    h1 { margin: 0 0 6px; }
-    .sub, .note { color: #aeb5ca; }
-    .balance { margin: 24px 0; color: #8cf0bf; font-size: 1.25rem; }
-    .orb { display: grid; place-items: center; min-height: 190px; margin: 18px 0; border: 1px solid #ffffff18; border-radius: 20px; background: #0e111a; font-size: clamp(2rem, 8vw, 3.3rem); font-weight: 800; transition: transform .25s, box-shadow .25s; }
-    .orb.rolling { animation: wobble .12s infinite alternate; }
-    .orb.rare { animation: rare-pop .8s ease-out; box-shadow: 0 0 45px #ffd84d88, inset 0 0 30px #ffd84d22; }
-    @keyframes wobble { from { transform: rotate(-2deg) scale(.98); } to { transform: rotate(2deg) scale(1.02); } }
-    @keyframes rare-pop { 0% { transform: scale(.4) rotate(-12deg); filter: brightness(2); } 60% { transform: scale(1.13) rotate(4deg); } 100% { transform: scale(1); } }
-    button, textarea { border: 1px solid #ffffff25; border-radius: 12px; background: #232a3d; color: #fff; font: inherit; padding: 11px 14px; }
-    button { cursor: pointer; }
-    button:hover { background: #303a54; }
-    button:disabled { cursor: wait; opacity: .6; }
-    #roll { width: 100%; padding: 15px; background: #6957e8; font-weight: 800; }
-    #roll:hover { background: #7d6dfa; }
-    /* TEMP MYTHIC ANIMATION TEST: remove this rule with the test button. */
-    #testMythic { width: 100%; margin-top: 10px; border-color: #ffd84d66; color: #ffe68a; }
-    #testMythic:hover { background: #51421b; }
-    .orb.mythic-test { position: relative; overflow: hidden; color: #fff4a8; animation: mythic-reveal 1.4s ease-out; box-shadow: 0 0 35px #ffd84daa, inset 0 0 50px #ff5fd933; }
-    @keyframes mythic-reveal {
-      0% { transform: scale(.2) rotate(-30deg); filter: brightness(3) hue-rotate(0deg); }
-      45% { transform: scale(1.18) rotate(12deg); filter: brightness(1.8) hue-rotate(100deg); }
-      70% { transform: scale(.92) rotate(-6deg); }
-      100% { transform: scale(1) rotate(0); filter: brightness(1) hue-rotate(0deg); }
+    body {
+      min-height: 100vh; margin: 0; padding: 28px 18px 48px;
+      background:
+        radial-gradient(ellipse at 50% -10%, #17404b 0%, transparent 46%),
+        linear-gradient(180deg, #081720, #06121a 70%);
     }
-    .sparkle-layer { position: absolute; inset: 0; pointer-events: none; }
-    .sparkle { position: absolute; left: 50%; top: 50%; width: 8px; height: 8px; border-radius: 50%; background: #fff6a8; box-shadow: 0 0 12px 4px #ffd84d; animation: sparkle-burst 1.1s ease-out forwards; }
-    @keyframes sparkle-burst {
-      from { transform: translate(-50%, -50%) scale(.3); opacity: 1; }
-      to { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+    button { font: inherit; }
+    .shell { width: min(1120px, 100%); margin: 0 auto; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 24px; }
+    .brand { display: flex; align-items: center; gap: 13px; }
+    .brand-mark { width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid #4e9291; background: #102e36; color: var(--mint); font-size: 21px; }
+    .eyebrow { margin: 0 0 4px; color: var(--mint); font-size: .7rem; font-weight: 800; letter-spacing: .2em; }
+    h1 { margin: 0; font-size: clamp(1.2rem, 4vw, 1.65rem); letter-spacing: .09em; }
+    .header-note { color: var(--muted); font-size: .86rem; text-align: right; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(290px, .85fr); gap: 18px; align-items: start; }
+    .panel { border: 1px solid var(--line); background: linear-gradient(145deg, #10262f, #0a1a23); box-shadow: 0 18px 55px #0004; }
+    .main-panel { padding: clamp(20px, 4vw, 34px); }
+    .side-panel { padding: 22px; }
+    .section-label { color: var(--muted); font-size: .72rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+    .depth-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; }
+    .zone-name { margin: 8px 0 4px; font-size: clamp(1.45rem, 4vw, 2.1rem); }
+    .zone-copy { margin: 0; color: var(--muted); line-height: 1.5; }
+    .depth-readout { min-width: 104px; padding: 10px 13px; border-left: 2px solid var(--aqua); background: #102c34; text-align: right; }
+    .depth-readout strong { display: block; color: var(--aqua); font-size: 1.2rem; }
+    .depth-readout span { color: var(--muted); font-size: .72rem; }
+    .ocean-window { position: relative; height: 190px; margin: 24px 0 20px; overflow: hidden; border: 1px solid #2a5358; background: linear-gradient(180deg, #164555 0%, #0b2939 40%, #071923 100%); }
+    .ocean-window:before { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(180deg, transparent 0 28px, #b0f3e40d 29px 30px); }
+    .beam { position: absolute; top: -10%; left: 17%; width: 22%; height: 120%; background: linear-gradient(180deg, #bbf5dd24, transparent); transform: skewX(-18deg); }
+    .beam.two { left: 58%; width: 12%; opacity: .5; }
+    .submersible { position: absolute; top: 42%; left: 44%; width: 86px; height: 27px; border: 2px solid #a8d7c6; border-radius: 60% 45% 45% 60%; background: linear-gradient(90deg, #17343a, #4e7770); box-shadow: 0 0 25px #8af2ce66; transition: top .7s ease, left .7s ease; }
+    .submersible:before { content: ""; position: absolute; right: 10px; top: 4px; width: 13px; height: 13px; border: 1px solid #c6f3dd; border-radius: 50%; background: #75e5dd; box-shadow: 0 0 12px #65d5df; }
+    .submersible:after { content: ""; position: absolute; left: -17px; top: 8px; width: 17px; height: 7px; background: #76bcb4; clip-path: polygon(100% 0, 100% 100%, 0 50%); }
+    .seafloor { position: absolute; right: -5%; bottom: -24px; left: -5%; height: 61px; border-top: 1px solid #73928a; background: linear-gradient(175deg, #29433d, #122722 72%); transform: rotate(-2deg); }
+    .window-caption { position: absolute; bottom: 12px; left: 15px; z-index: 1; color: #c2dad2; font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; }
+    .resource-row { display: flex; justify-content: space-between; align-items: end; gap: 12px; }
+    .resource-value { color: var(--mint); font-size: clamp(1.8rem, 6vw, 2.75rem); font-weight: 750; font-variant-numeric: tabular-nums; letter-spacing: -.04em; }
+    .rate { color: var(--muted); font-size: .86rem; text-align: right; }
+    .progress-track { height: 12px; margin: 12px 0 8px; overflow: hidden; border: 1px solid #33575a; background: #07151b; }
+    .progress-fill { width: 0; height: 100%; background: linear-gradient(90deg, #51bfa9, #a1f1c6); box-shadow: 0 0 16px #8af2ce66; transition: width .25s; }
+    .progress-copy { display: flex; justify-content: space-between; gap: 10px; color: var(--muted); font-size: .78rem; }
+    .dive-button, .upgrade-button, .reset-button { border: 1px solid #41786f; background: #153b3b; color: #dfffee; cursor: pointer; transition: background .15s, transform .15s, border-color .15s; }
+    .dive-button { width: 100%; margin-top: 20px; padding: 15px 18px; font-weight: 800; letter-spacing: .04em; }
+    .dive-button:hover:not(:disabled), .upgrade-button:hover:not(:disabled) { border-color: var(--mint); background: #1c5149; transform: translateY(-1px); }
+    button:disabled { cursor: not-allowed; opacity: .48; }
+    .dive-button small { display: block; margin-top: 4px; color: #a9ccc0; font-weight: 500; }
+    .side-title { margin: 0 0 5px; font-size: 1.08rem; }
+    .side-copy { margin: 0 0 18px; color: var(--muted); font-size: .84rem; line-height: 1.5; }
+    .upgrade { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 15px 0; border-top: 1px solid #203d42; }
+    .upgrade h3 { margin: 0 0 4px; font-size: .98rem; }
+    .upgrade p { margin: 0; color: var(--muted); font-size: .78rem; line-height: 1.45; }
+    .upgrade-count { display: inline-block; min-width: 27px; margin-left: 5px; padding: 2px 6px; border: 1px solid #31575b; color: var(--aqua); font-size: .73rem; text-align: center; }
+    .upgrade-button { min-width: 112px; padding: 10px; text-align: center; font-size: .8rem; font-weight: 750; }
+    .upgrade-button span { display: block; margin-top: 3px; color: #b1d1c5; font-size: .7rem; font-weight: 500; }
+    .cores-box { margin-top: 15px; padding: 15px; border: 1px solid #63563b; background: #29271d; }
+    .cores-top { display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+    .cores-top strong { color: var(--gold); font-size: 1.2rem; }
+    .cores-box p { margin: 7px 0 12px; color: #c4b996; font-size: .78rem; line-height: 1.45; }
+    .core-buy { width: 100%; border-color: #827049; background: #4a3c25; }
+    .core-buy:hover:not(:disabled) { border-color: var(--gold); background: #65502e; }
+    .map-panel { margin-top: 18px; padding: 20px 22px; }
+    .map-head { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; margin-bottom: 15px; }
+    .map-head h2 { margin: 0; font-size: 1rem; }
+    .map-head span { color: var(--muted); font-size: .75rem; }
+    .route { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 7px; }
+    .route-stop { position: relative; min-height: 69px; padding: 10px 8px; border: 1px solid #29464b; background: #0a1a22; color: #829c9b; }
+    .route-stop:before { content: ""; display: block; width: 100%; height: 3px; margin-bottom: 9px; background: #29464b; }
+    .route-stop span { display: block; font-size: .68rem; line-height: 1.25; }
+    .route-stop strong { display: block; margin-top: 4px; font-size: .7rem; }
+    .route-stop.visited { border-color: #397866; color: #a4d6be; }
+    .route-stop.visited:before { background: #62c5a0; }
+    .route-stop.current { border-color: #69c9c0; background: #12323a; color: #e0fff5; }
+    .route-stop.current:before { background: linear-gradient(90deg, #8af2ce, #65d5df); }
+    .footer { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 18px; color: #718a89; font-size: .75rem; }
+    .reset-button { padding: 7px 10px; border-color: #354b4e; background: transparent; color: #9aafad; font-size: .75rem; }
+    .notice { min-height: 1.2em; margin: 14px 0 0; color: var(--gold); font-size: .82rem; }
+    @media (max-width: 760px) {
+      body { padding: 18px 12px 36px; }
+      header { align-items: flex-start; }
+      .header-note { max-width: 130px; line-height: 1.4; }
+      .layout { grid-template-columns: 1fr; }
+      .side-panel { order: 2; }
+      .map-panel { order: 3; }
+      .route { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .route-stop:last-child { grid-column: span 2; }
     }
-    .actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
-    .history { text-align: left; margin-top: 24px; }
-    #history { max-height: 170px; overflow: auto; padding-left: 22px; }
-    details { margin-top: 18px; text-align: left; }
-    textarea { display: block; width: 100%; min-height: 78px; margin: 10px 0; resize: vertical; }
-    .note { font-size: .85rem; line-height: 1.5; }
-    .tag { color: #ffd84d; font-size: .8rem; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *:before, *:after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+    }
   </style>
 </head>
 <body>
-  <main>
-    <h1>🎲 Lucky Roll</h1>
-    <div class="sub">A just-for-fun roll demo. No real money or prizes.</div>
-    <div class="balance">Points: <strong id="points">0</strong></div>
-    <div class="orb" id="orb" aria-live="polite">Ready?</div>
-    <button id="roll">Roll</button>
-    <!-- TEMP MYTHIC ANIMATION TEST: remove this button and its handler to remove test mode. -->
-    <button id="testMythic" type="button">🧪 Test Mythic (1 in 10,000) animation</button>
-
-    <section class="history">
-      <strong>Recent rolls</strong>
-      <ol id="history"></ol>
-    </section>
-
-    <details>
-      <summary>Save and rare-roll log</summary>
-      <p class="note">Progress saves in this browser. Export/import carries the save between browsers. The checksum catches accidental edits, but cannot prove a roll is genuine.</p>
-      <div class="actions">
-        <button id="export">Export save</button>
-        <button id="import">Import save</button>
-        <button id="downloadStats">Download rare-roll log</button>
-        <button id="reset">Reset browser save</button>
+  <div class="shell">
+    <header>
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">⌁</div>
+        <div>
+          <p class="eyebrow">PELAGIC RESEARCH INITIATIVE</p>
+          <h1>DEEP SIGNAL</h1>
+        </div>
       </div>
-      <textarea id="saveText" placeholder="Exported save appears here; paste a save here to import."></textarea>
-      <div id="saveMessage" class="note" aria-live="polite"></div>
-    </details>
+      <div class="header-note">An idle expedition<br>to the ocean floor</div>
+    </header>
 
-    <p class="note">The downloaded roll-stats.json is a browser-made snapshot and can be edited. GitHub Pages cannot write visitor rolls into the repository's existing stats.json, so this log cannot independently verify rolls.</p>
-  </main>
+    <div class="layout">
+      <main class="panel main-panel">
+        <div class="depth-head">
+          <div>
+            <div class="section-label">Current expedition</div>
+            <h2 class="zone-name" id="zoneName">Sunlit Shelf</h2>
+            <p class="zone-copy" id="zoneCopy">A calm beginning. Set up your first research station.</p>
+          </div>
+          <div class="depth-readout"><strong id="depthValue">200 m</strong><span>BELOW SEA LEVEL</span></div>
+        </div>
+
+        <div class="ocean-window" aria-label="Illustration of a submersible descending through the ocean">
+          <div class="beam"></div><div class="beam two"></div>
+          <div class="submersible" id="submersible"></div>
+          <div class="seafloor"></div>
+          <div class="window-caption" id="windowCaption">Light reaches the seafloor</div>
+        </div>
+
+        <div class="resource-row">
+          <div>
+            <div class="section-label">Research data</div>
+            <div class="resource-value" id="dataValue">0</div>
+          </div>
+          <div class="rate"><strong id="rateValue">0</strong><br>data per second</div>
+        </div>
+        <div class="progress-track" role="progressbar" aria-label="Progress toward next descent" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progressBar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-copy"><span id="progressLabel">Next descent</span><span id="progressValue">0 / 100 data</span></div>
+        <button class="dive-button" id="diveButton" disabled>
+          <span id="diveTitle">DESCEND TO TWILIGHT REACH</span>
+          <small id="diveHint">Requires 100 research data · earns 1 research core</small>
+        </button>
+        <p class="notice" id="notice" aria-live="polite"></p>
+      </main>
+
+      <aside class="panel side-panel">
+        <div class="section-label">Station development</div>
+        <h2 class="side-title">Build your expedition</h2>
+        <p class="side-copy">Spend research data to expand your station's automatic output.</p>
+
+        <div class="upgrade">
+          <div>
+            <h3>Research lab <span class="upgrade-count" id="labCount">0</span></h3>
+            <p>Careful analysis, around the clock.<br>+0.6 data per second</p>
+          </div>
+          <button class="upgrade-button" id="buyLab">Build lab<span id="labCost">10 data</span></button>
+        </div>
+        <div class="upgrade">
+          <div>
+            <h3>Survey submersible <span class="upgrade-count" id="subCount">0</span></h3>
+            <p>Bring back samples from the dark.<br>+2 data per second</p>
+          </div>
+          <button class="upgrade-button" id="buySub">Launch sub<span id="subCost">35 data</span></button>
+        </div>
+
+        <div class="cores-box">
+          <div class="cores-top"><span class="section-label">Permanent research cores</span><strong id="coreCount">0</strong></div>
+          <p>Each core boosts all research output by 12%. Cores survive every descent.</p>
+          <button class="upgrade-button core-buy" id="buyCore">Calibrate a core<span id="coreCost">Cost: 5 cores · +25% output</span></button>
+        </div>
+      </aside>
+    </div>
+
+    <section class="panel map-panel">
+      <div class="map-head"><h2>Descent chart</h2><span id="chartStatus">Five mapped zones</span></div>
+      <div class="route" id="route" aria-label="Ocean depth route"></div>
+      <div class="footer">
+        <span id="saveStatus">Progress saves in this browser.</span>
+        <button class="reset-button" id="resetButton">Reset expedition</button>
+      </div>
+    </section>
+  </div>
 
   <script>
     (() => {
-      const STORAGE_KEY = "lucky-roll-save-v2";
-
-      // Each entry has a direct 1-in-N chance per roll. Rarer entries go first.
-      // 1 in 12.5 is exactly represented as 2 successes out of 25.
-      const RARITY = [
-        { name: "Mythic",    numerator: 1, denominator: 10000, odds: "1 in 10,000", points: 10000, emoji: "🌈" },
-        { name: "Legendary", numerator: 1, denominator: 500,   odds: "1 in 500",    points: 2000,  emoji: "🟠" },
-        { name: "Epic",      numerator: 1, denominator: 50,    odds: "1 in 50",     points: 250,   emoji: "🟣" },
-        { name: "Rare",      numerator: 2, denominator: 25,    odds: "1 in 12.5",   points: 60,    emoji: "🔵" },
-        { name: "Uncommon",  numerator: 1, denominator: 5,     odds: "1 in 5",      points: 15,    emoji: "🟢" },
-        { name: "Common",    numerator: 1, denominator: 1,     odds: "Always",      points: 1,     emoji: "⚪" }
+      const SAVE_KEY = "deep-signal-idle-v1";
+      const ZONES = [
+        { name: "Sunlit Shelf", depth: "200 m", cost: 100, copy: "A calm beginning. Set up your first research station.", caption: "Light reaches the seafloor" },
+        { name: "Twilight Reach", depth: "900 m", cost: 450, copy: "Blue light fades. Strange signals drift up from below.", caption: "The last blue light" },
+        { name: "Midnight Zone", depth: "2,800 m", cost: 2500, copy: "No sunlight reaches here. Your instruments become essential.", caption: "Dark water, distant signals" },
+        { name: "Abyssal Plain", depth: "4,500 m", cost: 16000, copy: "A vast, quiet plain stretches beyond the reach of daylight.", caption: "An ocean without a horizon" },
+        { name: "Hadal Trench", depth: "8,000 m", cost: 120000, copy: "The trench walls close in. Every discovery changes the mission.", caption: "Pressure rising" }
       ];
+      const freshState = () => ({ depth: 0, data: 0, labs: 0, subs: 0, cores: 0, coreLevels: 0, lastTick: Date.now() });
+      let state = loadState();
+      let lastFrame = Date.now();
+      let lastSave = lastFrame;
+      let noticeTimer = 0;
 
-      const $ = id => document.getElementById(id);
-      const freshSave = () => ({ points: 0, rolls: 0, rareRolls: [], recent: [] });
-
-      function readSave() {
+      function loadState() {
         try {
-          const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY));
-          if (parsed && Number.isFinite(parsed.points) && parsed.points >= 0 &&
-              Number.isInteger(parsed.rolls) && parsed.rolls >= 0 &&
-              Array.isArray(parsed.rareRolls) && Array.isArray(parsed.recent)) return parsed;
-
-          // Keep existing progress from the earlier coin-based demo.
-          const old = JSON.parse(localStorage.getItem("lucky-roll-save-v1"));
-          if (old && Number.isFinite(old.balance)) {
-            return {
-              points: Math.max(0, old.balance - 1000),
-              rolls: Number.isInteger(old.rolls) ? old.rolls : 0,
-              rareRolls: Array.isArray(old.rareRolls) ? old.rareRolls.map(item => ({
-                ...item, points: item.points ?? item.payout ?? 0
-              })) : [],
-              recent: Array.isArray(old.recent) ? old.recent.map(item => ({
-                ...item, points: item.points ?? item.payout ?? 0
-              })) : []
-            };
+          const raw = JSON.parse(localStorage.getItem(SAVE_KEY));
+          if (!raw || !Number.isFinite(raw.data) || !Number.isInteger(raw.depth)) return freshState();
+          const saved = {
+            depth: Math.max(0, raw.depth),
+            data: Math.max(0, raw.data),
+            labs: Math.max(0, Math.floor(raw.labs || 0)),
+            subs: Math.max(0, Math.floor(raw.subs || 0)),
+            cores: Math.max(0, Math.floor(raw.cores || 0)),
+            coreLevels: Math.max(0, Math.floor(raw.coreLevels || 0)),
+            lastTick: Number.isFinite(raw.lastTick) ? raw.lastTick : Date.now()
+          };
+          const offlineSeconds = Math.min(8 * 60 * 60, Math.max(0, (Date.now() - saved.lastTick) / 1000));
+          saved.data += rateFor(saved) * offlineSeconds;
+          if (offlineSeconds > 5) {
+            setTimeout(() => announce("Welcome back. Your station collected " + format(saved.data - Math.max(0, raw.data)) + " data while you were away."), 250);
           }
-        } catch {}
-        return freshSave();
+          return saved;
+        } catch {
+          return freshState();
+        }
       }
 
-      let save = readSave();
+      function zoneAt(depth) {
+        if (depth < ZONES.length) return ZONES[depth];
+        const extra = depth - ZONES.length + 1;
+        return {
+          name: "Unmapped Trench " + extra,
+          depth: (8000 + extra * 1800).toLocaleString() + " m",
+          cost: Math.ceil(120000 * Math.pow(7.5, extra)),
+          copy: "An unexplored trench beyond the old charts. Your expedition is making history.",
+          caption: "Unmapped water — signal detected"
+        };
+      }
 
-      function persist() {
+      function rateFor(source) {
+        return (0.4 + source.labs * 0.6 + source.subs * 2) *
+          (1 + source.depth * 0.42) *
+          (1 + source.cores * 0.12 + source.coreLevels * 0.25);
+      }
+
+      function labCost() { return Math.ceil(10 * Math.pow(1.55, state.labs)); }
+      function subCost() { return Math.ceil(35 * Math.pow(1.7, state.subs)); }
+
+      function format(value) {
+        if (value < 1000) return Math.floor(value).toLocaleString();
+        const units = ["K", "M", "B", "T", "Qa", "Qi"];
+        let unit = -1;
+        while (value >= 1000 && unit < units.length - 1) { value /= 1000; unit += 1; }
+        return value.toFixed(value < 10 ? 2 : value < 100 ? 1 : 0) + units[unit];
+      }
+
+      function announce(message) {
+        const target = document.getElementById("notice");
+        target.textContent = message;
+        window.clearTimeout(noticeTimer);
+        noticeTimer = window.setTimeout(() => { target.textContent = ""; }, 4500);
+      }
+
+      function save() {
+        state.lastTick = Date.now();
         try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(save));
-          render();
+          localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+          document.getElementById("saveStatus").textContent = "Progress saves in this browser.";
         } catch {
-          $("saveMessage").textContent = "Could not save in this browser. Try exporting your save.";
+          document.getElementById("saveStatus").textContent = "Browser storage is unavailable; progress may not persist.";
         }
       }
 
       function render() {
-        $("points").textContent = save.points.toLocaleString();
-        $("history").replaceChildren();
-        save.recent.slice(0, 10).forEach(item => {
-          const li = document.createElement("li");
-          li.textContent = `${item.emoji} ${item.name} — ${item.points} points`;
-          if (item.rare) {
-            const tag = document.createElement("span");
-            tag.className = "tag";
-            tag.textContent = "  RARE";
-            li.appendChild(tag);
-          }
-          $("history").appendChild(li);
+        const zone = zoneAt(state.depth);
+        const next = zoneAt(state.depth + 1);
+        const rate = rateFor(state);
+        const progress = Math.min(100, state.data / zone.cost * 100);
+        document.title = zone.name + " — DEEP SIGNAL";
+        document.getElementById("zoneName").textContent = zone.name;
+        document.getElementById("zoneCopy").textContent = zone.copy;
+        document.getElementById("depthValue").textContent = zone.depth;
+        document.getElementById("windowCaption").textContent = zone.caption;
+        document.getElementById("dataValue").textContent = format(state.data);
+        document.getElementById("rateValue").textContent = format(rate);
+        document.getElementById("progressFill").style.width = progress + "%";
+        document.getElementById("progressBar").setAttribute("aria-valuenow", String(Math.floor(progress)));
+        document.getElementById("progressValue").textContent = format(state.data) + " / " + format(zone.cost) + " data";
+        document.getElementById("progressLabel").textContent = "Data needed to descend";
+        document.getElementById("diveTitle").textContent = "DESCEND TO " + next.name.toUpperCase();
+        document.getElementById("diveHint").textContent = "Requires " + format(zone.cost) + " research data · earns " + (1 + Math.floor(state.depth / 2)) + " research core" + (state.depth > 1 ? "s" : "");
+        document.getElementById("diveButton").disabled = state.data < zone.cost;
+        document.getElementById("labCount").textContent = state.labs;
+        document.getElementById("subCount").textContent = state.subs;
+        document.getElementById("labCost").textContent = format(labCost()) + " data";
+        document.getElementById("subCost").textContent = format(subCost()) + " data";
+        document.getElementById("buyLab").disabled = state.data < labCost();
+        document.getElementById("buySub").disabled = state.data < subCost();
+        document.getElementById("coreCount").textContent = state.cores;
+        document.getElementById("coreCost").textContent = "Cost: 5 cores · +" + (state.coreLevels + 1) * 25 + "% output";
+        document.getElementById("buyCore").disabled = state.cores < 5;
+        document.getElementById("chartStatus").textContent = state.depth >= ZONES.length ? "Beyond the mapped zones" : (ZONES.length - state.depth) + " zone" + (ZONES.length - state.depth === 1 ? "" : "s") + " ahead";
+        const route = document.getElementById("route");
+        route.replaceChildren();
+        ZONES.forEach((item, index) => {
+          const stop = document.createElement("div");
+          stop.className = "route-stop" + (index < state.depth ? " visited" : "") + (index === state.depth ? " current" : "");
+          stop.innerHTML = "<span>" + item.depth + "</span><strong>" + item.name + "</strong>";
+          route.appendChild(stop);
         });
+        if (state.depth >= ZONES.length) {
+          const stop = document.createElement("div");
+          stop.className = "route-stop current";
+          stop.innerHTML = "<span>" + zone.depth + "</span><strong>" + zone.name + "</strong>";
+          route.appendChild(stop);
+        }
+        const sub = document.getElementById("submersible");
+        sub.style.top = (26 + Math.min(state.depth, 6) * 8) + "%";
+        sub.style.left = (38 + (state.depth % 3) * 9) + "%";
       }
 
-      // Unbiased integer in [0, max), using rejection sampling.
-      function randomBelow(max) {
-        const range = 0x100000000;
-        const limit = Math.floor(range / max) * max;
-        const array = new Uint32Array(1);
-        do { crypto.getRandomValues(array); } while (array[0] >= limit);
-        return array[0] % max;
+      function buy(kind) {
+        if (kind === "lab") {
+          const cost = labCost();
+          if (state.data < cost) return;
+          state.data -= cost;
+          state.labs += 1;
+          announce("Research lab online. Output increased.");
+        } else {
+          const cost = subCost();
+          if (state.data < cost) return;
+          state.data -= cost;
+          state.subs += 1;
+          announce("Survey submersible launched. Samples are on the way.");
+        }
+        render();
+        save();
       }
 
-      function hitsChance(item) {
-        return item.numerator === item.denominator ||
-          randomBelow(item.denominator) < item.numerator;
-      }
-
-      function pickResult() {
-        for (const item of RARITY) {
-          if (hitsChance(item)) return item;
-        }
-        return RARITY[RARITY.length - 1];
-      }
-
-      const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-
-      async function roll() {
-        $("roll").disabled = true;
-        const orb = $("orb");
-        orb.className = "orb rolling";
-
-        for (let i = 0; i < 12; i++) {
-          const preview = RARITY[randomBelow(RARITY.length)];
-          orb.textContent = `${preview.emoji} ${preview.name}`;
-          await delay(65 + i * 8);
-        }
-
-        const result = pickResult();
-        const isRare = ["Rare", "Epic", "Legendary", "Mythic"].includes(result.name);
-        save.points += result.points;
-        save.rolls += 1;
-
-        const entry = {
-          name: result.name,
-          odds: result.odds,
-          emoji: result.emoji,
-          points: result.points,
-          rare: isRare,
-          time: new Date().toISOString(),
-          rollNumber: save.rolls
-        };
-
-        save.recent.unshift(entry);
-        save.recent = save.recent.slice(0, 30);
-        if (isRare) {
-          save.rareRolls.unshift(entry);
-          save.rareRolls = save.rareRolls.slice(0, 500);
-        }
-
-        orb.className = "orb" + (isRare ? " rare" : "");
-        orb.textContent = `${result.emoji} ${result.name}! +${result.points} points`;
-        persist();
-        setTimeout(() => { orb.className = "orb"; }, 900);
-        $("roll").disabled = false;
-      }
-
-      // Encoding plus an unkeyed checksum detects accidental changes only.
-      async function makeEnvelope(data) {
-        const payload = JSON.stringify(data);
-        const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(payload));
-        const checksum = Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, "0")).join("");
-        return btoa(unescape(encodeURIComponent(JSON.stringify({ payload, checksum }))));
-      }
-
-      async function decodeEnvelope(text) {
-        const envelope = JSON.parse(decodeURIComponent(escape(atob(text.trim()))));
-        if (!envelope || typeof envelope.payload !== "string" || typeof envelope.checksum !== "string") {
-          throw new Error("That save format is not recognized.");
-        }
-        const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(envelope.payload));
-        const checksum = Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, "0")).join("");
-        if (checksum !== envelope.checksum) throw new Error("Save check failed; it may have been changed.");
-
-        const data = JSON.parse(envelope.payload);
-        if (!Number.isFinite(data.points) || data.points < 0 ||
-            !Number.isInteger(data.rolls) || data.rolls < 0 ||
-            !Array.isArray(data.rareRolls) || !Array.isArray(data.recent)) {
-          throw new Error("Save data is invalid.");
-        }
-        return data;
-      }
-
-      $("roll").addEventListener("click", roll);
-
-      // TEMP MYTHIC ANIMATION TEST: this visual preview never changes the save.
-      $("testMythic").addEventListener("click", testMythicAnimation);
-
-      async function testMythicAnimation() {
-        const rollButton = $("roll");
-        const testButton = $("testMythic");
-        const orb = $("orb");
-        rollButton.disabled = true;
-        testButton.disabled = true;
-        orb.className = "orb rolling";
-
-        for (let i = 0; i < 22; i++) {
-          const preview = RARITY[randomBelow(RARITY.length)];
-          orb.textContent = `${preview.emoji} ${preview.name}`;
-          await delay(55 + i * 12);
-        }
-
-        const mythic = RARITY[0];
-        orb.className = "orb rare mythic-test";
-        orb.textContent = `${mythic.emoji} MYTHIC! +${mythic.points} points`;
-
-        const sparkles = document.createElement("span");
-        sparkles.className = "sparkle-layer";
-        for (let i = 0; i < 32; i++) {
-          const sparkle = document.createElement("i");
-          sparkle.className = "sparkle";
-          const angle = (Math.PI * 2 * i) / 32;
-          const distance = 70 + randomBelow(110);
-          sparkle.style.setProperty("--dx", `${Math.cos(angle) * distance}px`);
-          sparkle.style.setProperty("--dy", `${Math.sin(angle) * distance}px`);
-          sparkle.style.animationDelay = `${randomBelow(180)}ms`;
-          sparkles.appendChild(sparkle);
-        }
-        orb.appendChild(sparkles);
-
-        await delay(2200);
-        orb.className = "orb";
-        orb.textContent = "Ready?";
-        rollButton.disabled = false;
-        testButton.disabled = false;
-      }
-
-      $("export").addEventListener("click", async () => {
-        try {
-          $("saveText").value = await makeEnvelope(save);
-          $("saveMessage").textContent = "Save exported. Copy the text to keep it.";
-        } catch {
-          $("saveMessage").textContent = "Could not export the save in this browser.";
-        }
+      document.getElementById("buyLab").addEventListener("click", () => buy("lab"));
+      document.getElementById("buySub").addEventListener("click", () => buy("sub"));
+      document.getElementById("buyCore").addEventListener("click", () => {
+        if (state.cores < 5) return;
+        state.cores -= 5;
+        state.coreLevels += 1;
+        announce("Core calibrated. All future research is faster.");
+        render();
+        save();
+      });
+      document.getElementById("diveButton").addEventListener("click", () => {
+        const zone = zoneAt(state.depth);
+        if (state.data < zone.cost) return;
+        const earned = 1 + Math.floor(state.depth / 2);
+        state.cores += earned;
+        state.depth += 1;
+        state.data = 0;
+        state.labs = 0;
+        state.subs = 0;
+        announce("Expedition descended. +" + earned + " permanent research core" + (earned === 1 ? "" : "s") + " secured.");
+        render();
+        save();
+      });
+      document.getElementById("resetButton").addEventListener("click", () => {
+        if (!window.confirm("Reset this expedition and erase its browser save?")) return;
+        state = freshState();
+        render();
+        save();
+        announce("A new expedition is ready.");
       });
 
-      $("import").addEventListener("click", async () => {
-        try {
-          save = await decodeEnvelope($("saveText").value);
-          persist();
-          $("saveMessage").textContent = "Save imported.";
-        } catch (error) {
-          $("saveMessage").textContent = error.message || "Could not import that save.";
-        }
-      });
-
-      $("downloadStats").addEventListener("click", () => {
-        const stats = {
-          note: "Browser-exported rare-roll records; not independently verified.",
-          totalRolls: save.rolls,
-          rareRolls: save.rareRolls
-        };
-        const blob = new Blob([JSON.stringify(stats, null, 2)], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = "roll-stats.json";
-        link.click();
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-      });
-
-      $("reset").addEventListener("click", () => {
-        if (!confirm("Reset this browser's save? This cannot be undone.")) return;
-        save = freshSave();
-        persist();
-        $("saveMessage").textContent = "Browser save reset.";
-      });
+      window.setInterval(() => {
+        const now = Date.now();
+        const elapsed = Math.min(10, Math.max(0, (now - lastFrame) / 1000));
+        lastFrame = now;
+        state.data += rateFor(state) * elapsed;
+        render();
+        if (now - lastSave > 5000) { save(); lastSave = now; }
+      }, 250);
 
       render();
+      save();
     })();
   </script>
 </body>
