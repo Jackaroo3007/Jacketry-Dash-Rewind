@@ -377,7 +377,10 @@
         if (banned && Date.now() >= bannedUntil) {
           banned = false;
           bannedUntil = 0;
-          try { localStorage.removeItem(BAN_KEY); } catch {}
+          try {
+            localStorage.removeItem(BAN_KEY);
+            localStorage.removeItem(SAVE_KEY);
+          } catch {}
           state = freshState();
         }
         const zone = zoneAt(state.depth);
