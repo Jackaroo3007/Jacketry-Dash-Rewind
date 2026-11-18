@@ -279,9 +279,9 @@
       ];
       const freshState = () => ({ depth: 0, data: 0, labs: 0, subs: 0, advancedLabs: 0, deepSubs: 0, cores: 0, coreLevels: 0, research: [], lastTick: Date.now() });
       const RESEARCH = [
-        { id: "pressure", button: "researchPressure", status: "pressureStatus", cost: 2, requires: null },
-        { id: "labs", button: "researchLabs", status: "labsResearchStatus", cost: 3, requires: "pressure" },
-        { id: "abyssal", button: "researchAbyssal", status: "abyssalStatus", cost: 5, requires: "labs" }
+        { id: "pressure", label: "Pressure Mathematics", button: "researchPressure", status: "pressureStatus", cost: 2, requires: null },
+        { id: "labs", label: "Autonomous Labs", button: "researchLabs", status: "labsResearchStatus", cost: 3, requires: "pressure" },
+        { id: "abyssal", label: "Abyssal Engineering", button: "researchAbyssal", status: "abyssalStatus", cost: 5, requires: "labs" }
       ];
       let state = banned ? freshState() : loadState();
       let lastFrame = Date.now();
@@ -507,7 +507,7 @@
           button.classList.toggle("unlocked", unlocked);
           button.disabled = banned || unlocked || !prerequisiteMet || state.cores < node.cost;
           const status = document.getElementById(node.status);
-          status.textContent = unlocked ? "UNLOCKED" : (node.cost + " cores" + (node.requires ? " · requires " + researchLookup[node.requires].id : ""));
+          status.textContent = unlocked ? "UNLOCKED" : (node.cost + " cores" + (node.requires ? " · requires " + researchLookup[node.requires].label : ""));
         }
         document.getElementById("deepLabUpgrade").hidden = !hasResearch(state, "labs");
         document.getElementById("deepSubUpgrade").hidden = !hasResearch(state, "abyssal");
@@ -666,7 +666,13 @@
             render();
             return;
           }
-          state = { ...envelope.payload };
+          state = {
+            ...freshState(),
+            ...envelope.payload,
+            research: Array.isArray(envelope.payload.research) ? [...new Set(envelope.payload.research)] : [],
+            advancedLabs: envelope.payload.advancedLabs || 0,
+            deepSubs: envelope.payload.deepSubs || 0
+          };
           const offlineSeconds = Math.min(8 * 60 * 60, Math.max(0, (Date.now() - state.lastTick) / 1000));
           state.data += rateFor(state) * offlineSeconds;
           state.lastTick = Date.now();
