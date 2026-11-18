@@ -44,14 +44,36 @@
     .depth-readout { min-width: 104px; padding: 10px 13px; border-left: 2px solid var(--aqua); background: #102c34; text-align: right; }
     .depth-readout strong { display: block; color: var(--aqua); font-size: 1.2rem; }
     .depth-readout span { color: var(--muted); font-size: .72rem; }
-    .ocean-window { position: relative; height: 190px; margin: 24px 0 20px; overflow: hidden; border: 1px solid #2a5358; background: linear-gradient(180deg, #164555 0%, #0b2939 40%, #071923 100%); }
+    .ocean-window { position: relative; height: 190px; margin: 24px 0 20px; overflow: hidden; border: 1px solid #2a5358; background: linear-gradient(180deg, #164555 0%, #0b2939 40%, #071923 100%); transition: background 1s ease; }
+    .ocean-window.midnight { background: radial-gradient(ellipse at 42% 52%, #0a2029 0%, #06131b 45%, #02070c 100%); }
+    .ocean-window.abyss { background: radial-gradient(ellipse at 45% 58%, #07131a 0%, #03090e 45%, #010407 100%); }
+    .ocean-window.hadal { background: radial-gradient(ellipse at 44% 62%, #071014 0%, #020609 42%, #000204 100%); }
+    .ocean-window.immersive { position: fixed; inset: 0; z-index: 10000; width: 100vw; height: 100vh; height: 100dvh; margin: 0; border: 0; }
+    body.descent-scene-open { overflow: hidden; }
+    .scene-close { display: none; position: absolute; top: 18px; left: 18px; z-index: 8; padding: 10px 13px; border: 1px solid #9ac5bb99; background: #06131acc; color: #ecfff7; cursor: pointer; font: inherit; }
+    .ocean-window.immersive .scene-close { display: block; }
+    .ocean-window.immersive .window-caption { bottom: 26px; left: 28px; font-size: .9rem; }
+    .ocean-window.immersive .submersible { width: 120px; height: 38px; }
+    .ocean-window.immersive .submersible:before { width: 17px; height: 17px; top: 8px; }
+    .surface-line { position: absolute; top: 0; left: 0; right: 0; z-index: 2; height: 17px; border-bottom: 2px solid #a8f2e9; background: linear-gradient(180deg, #baf5edcc, #4aabc766 65%, transparent); box-shadow: 0 7px 22px #56d7e388; color: #eaffff; font-size: .62rem; letter-spacing: .12em; text-align: center; }
+    .surface-line[hidden] { display: none; }
+    .depth-ruler { position: absolute; top: 16px; right: 18px; bottom: 16px; z-index: 4; width: 82px; border: 1px solid #a3d6d355; background: #0310169c; color: #d9efeb; }
+    .ocean-window.immersive .depth-ruler { top: 7vh; right: 4vw; bottom: 7vh; width: 112px; }
+    .ruler-title { padding: 8px 5px 5px; color: #8bd9cf; font-size: .62rem; font-weight: 800; letter-spacing: .16em; text-align: center; }
+    .depth-scale-window { position: absolute; inset: 29px 0 0; overflow: hidden; }
+    .depth-scale-list { position: absolute; top: 0; left: 0; width: 100%; }
+    .depth-tick { position: relative; height: 28px; border-left: 1px solid #78aaa48c; margin-left: 12px; }
+    .depth-tick:before { content: ""; position: absolute; top: 0; left: -1px; width: 10px; border-top: 1px solid #78aaa48c; }
+    .depth-tick span { position: absolute; top: -7px; left: 16px; color: #b8cecc; font-size: .62rem; white-space: nowrap; }
+    .depth-current { position: absolute; top: 56%; left: -1px; right: -1px; z-index: 3; height: 2px; background: #9af7d6; box-shadow: 0 0 12px #8af2ce; }
+    .depth-current span { position: absolute; right: 5px; bottom: 5px; padding: 4px 6px; background: #133e3c; color: #e7fff5; font-size: .73rem; font-weight: 800; }
     .ocean-window:before { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(180deg, transparent 0 28px, #b0f3e40d 29px 30px); }
     .beam { position: absolute; top: -10%; left: 17%; width: 22%; height: 120%; background: linear-gradient(180deg, #bbf5dd24, transparent); transform: skewX(-18deg); }
     .beam.two { left: 58%; width: 12%; opacity: .5; }
     .submersible { position: absolute; top: 42%; left: 44%; width: 86px; height: 27px; border: 2px solid #a8d7c6; border-radius: 60% 45% 45% 60%; background: linear-gradient(90deg, #17343a, #4e7770); box-shadow: 0 0 25px #8af2ce66; transition: top .7s ease, left .7s ease; }
     .submersible:before { content: ""; position: absolute; right: 10px; top: 4px; width: 13px; height: 13px; border: 1px solid #c6f3dd; border-radius: 50%; background: #75e5dd; box-shadow: 0 0 12px #65d5df; }
     .submersible:after { content: ""; position: absolute; left: -17px; top: 8px; width: 17px; height: 7px; background: #76bcb4; clip-path: polygon(100% 0, 100% 100%, 0 50%); }
-    .seafloor { position: absolute; right: -5%; bottom: -24px; left: -5%; height: 61px; border-top: 1px solid #73928a; background: linear-gradient(175deg, #29433d, #122722 72%); transform: rotate(-2deg); }
+
     .window-caption { position: absolute; bottom: 12px; left: 15px; z-index: 1; color: #c2dad2; font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; }
     .resource-row { display: flex; justify-content: space-between; align-items: end; gap: 12px; }
     .resource-value { color: var(--mint); font-size: clamp(1.8rem, 6vw, 2.75rem); font-weight: 750; font-variant-numeric: tabular-nums; letter-spacing: -.04em; }
@@ -171,11 +193,17 @@
           <div class="depth-readout"><strong id="depthValue">200 m</strong><span>BELOW SEA LEVEL</span></div>
         </div>
 
-        <div class="ocean-window" aria-label="Illustration of a submersible descending through the ocean">
+        <div class="ocean-window" id="oceanWindow" aria-label="Submersible descending through increasingly dark water">
+          <button class="scene-close" id="closeDescentScene" type="button">Return to expedition</button>
+          <div class="surface-line" id="surfaceLine"><span>OCEAN SURFACE · 0 m</span></div>
           <div class="beam"></div><div class="beam two"></div>
           <div class="submersible" id="submersible"></div>
-          <div class="seafloor"></div>
           <div class="window-caption" id="windowCaption">Light reaches the seafloor</div>
+          <div class="depth-ruler" aria-label="Scrolling depth scale">
+            <div class="ruler-title">DEPTH</div>
+            <div class="depth-scale-window" id="depthScaleWindow"><div class="depth-scale-list" id="depthScaleList"></div></div>
+            <div class="depth-current"><span id="depthScaleLabel">200 m</span></div>
+          </div>
         </div>
 
         <div class="resource-row">
@@ -308,7 +336,7 @@
       let banned = bannedUntil > Date.now();
       const ZONES = [
         { name: "Sunlit Shelf", depth: "200 m", cost: 80, copy: "A calm beginning. Set up your first research station.", caption: "Light reaches the seafloor" },
-        { name: "Twilight Reach", depth: "900 m", cost: 350, copy: "Blue light fades. Strange signals drift up from below.", caption: "The last blue light" },
+        { name: "Twilight Reach", depth: "800 m", cost: 350, copy: "Blue light fades. Strange signals drift up from below.", caption: "The last blue light" },
         { name: "Midnight Zone", depth: "2,800 m", cost: 1400, copy: "No sunlight reaches here. Your instruments become essential.", caption: "Dark water, distant signals" },
         { name: "Abyssal Plain", depth: "4,500 m", cost: 5500, copy: "A vast, quiet plain stretches beyond the reach of daylight.", caption: "An ocean without a horizon" },
         { name: "Hadal Trench", depth: "8,000 m", cost: 22000, copy: "The trench walls close in. Every discovery changes the mission.", caption: "Pressure rising" }
@@ -596,10 +624,58 @@
           stop.innerHTML = "<span>" + zone.depth + "</span><strong>" + zone.name + "</strong>";
           route.appendChild(stop);
         }
+        const oceanWindow = document.getElementById("oceanWindow");
+        oceanWindow.classList.toggle("midnight", state.depth >= 2);
+        oceanWindow.classList.toggle("abyss", state.depth >= 3);
+        oceanWindow.classList.toggle("hadal", state.depth >= 4);
+        document.getElementById("surfaceLine").hidden = state.depth > 1;
+        const depthMeters = Number(zone.depth.replace(/,/g, "").replace(/[^0-9]/g, "")) || 0;
+        document.getElementById("depthScaleLabel").textContent = depthMeters.toLocaleString() + " m";
+        const scaleWindow = document.getElementById("depthScaleWindow");
+        const scaleList = document.getElementById("depthScaleList");
+        if (scaleWindow.dataset.depth !== String(depthMeters)) {
+          scaleWindow.dataset.depth = String(depthMeters);
+          const tickStep = depthMeters <= 10000 ? 100 : 500;
+          const maximum = Math.ceil((depthMeters + 3000) / tickStep) * tickStep;
+          scaleList.replaceChildren();
+          for (let tick = 0; tick <= maximum; tick += tickStep) {
+            const mark = document.createElement("div");
+            mark.className = "depth-tick";
+            if (tick % (tickStep * 5) === 0) {
+              const label = document.createElement("span");
+              label.textContent = tick.toLocaleString() + " m";
+              mark.appendChild(label);
+            }
+            scaleList.appendChild(mark);
+          }
+          requestAnimationFrame(() => {
+            scaleWindow.scrollTo({
+              top: Math.max(0, (depthMeters / tickStep) * 28 - scaleWindow.clientHeight * 0.56),
+              behavior: "smooth"
+            });
+          });
+        }
         const sub = document.getElementById("submersible");
-        sub.style.top = (26 + Math.min(state.depth, 6) * 8) + "%";
+        sub.style.top = (20 + Math.min(state.depth, 7) * 11) + "%";
         sub.style.left = (38 + (state.depth % 3) * 9) + "%";
       }
+
+      let descentSceneTimer = 0;
+      function showDescentScene() {
+        const view = document.getElementById("oceanWindow");
+        view.classList.add("immersive");
+        document.body.classList.add("descent-scene-open");
+        window.clearTimeout(descentSceneTimer);
+        descentSceneTimer = window.setTimeout(closeDescentScene, 3200);
+      }
+
+      function closeDescentScene() {
+        document.getElementById("oceanWindow").classList.remove("immersive");
+        document.body.classList.remove("descent-scene-open");
+        window.clearTimeout(descentSceneTimer);
+      }
+
+      document.getElementById("closeDescentScene").addEventListener("click", closeDescentScene);
 
       function buy(kind) {
         if (kind === "lab") {
@@ -661,6 +737,7 @@
         state.subs = 0;
         state.advancedLabs = 0;
         state.deepSubs = 0;
+        showDescentScene();
         announce("Expedition descended. +" + earned + " permanent research core" + (earned === 1 ? "" : "s") + " secured.");
         render();
         save();
