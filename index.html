@@ -1,1 +1,294 @@
-Project Cancelled: GDRewind has replaced this!
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lucky Roll</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: system-ui, sans-serif;
+      background: #10131d;
+      color: #f5f6fa;
+    }
+    * { box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background:
+        radial-gradient(ellipse at top, #28345b 0%, transparent 55%),
+        #10131d;
+    }
+    main {
+      width: min(100%, 560px);
+      padding: 28px;
+      border: 1px solid #ffffff20;
+      border-radius: 24px;
+      background: #171b29eF;
+      box-shadow: 0 20px 80px #0008;
+      text-align: center;
+    }
+    h1 { margin: 0 0 6px; }
+    .sub, .note { color: #aeb5ca; }
+    .balance {
+      margin: 24px 0;
+      color: #8cf0bf;
+      font-size: 1.25rem;
+    }
+    .orb {
+      display: grid;
+      place-items: center;
+      min-height: 190px;
+      margin: 18px 0;
+      border: 1px solid #ffffff18;
+      border-radius: 20px;
+      background: #0e111a;
+      font-size: clamp(2rem, 8vw, 3.3rem);
+      font-weight: 800;
+      transition: transform .25s, box-shadow .25s;
+    }
+    .orb.rolling { animation: wobble .12s infinite alternate; }
+    .orb.rare {
+      animation: rare-pop .8s ease-out;
+      box-shadow: 0 0 45px #ffd84d88, inset 0 0 30px #ffd84d22;
+    }
+    @keyframes wobble {
+      from { transform: rotate(-2deg) scale(.98); }
+      to { transform: rotate(2deg) scale(1.02); }
+    }
+    @keyframes rare-pop {
+      0% { transform: scale(.4) rotate(-12deg); filter: brightness(2); }
+      60% { transform: scale(1.13) rotate(4deg); }
+      100% { transform: scale(1); }
+    }
+    button, input, textarea {
+      border: 1px solid #ffffff25;
+      border-radius: 12px;
+      background: #232a3d;
+      color: #fff;
+      font: inherit;
+      padding: 11px 14px;
+    }
+    button { cursor: pointer; }
+    button:hover { background: #303a54; }
+    button:disabled { cursor: wait; opacity: .6; }
+    #roll { width: 100%; padding: 15px; background: #6957e8; font-weight: 800; }
+    #roll:hover { background: #7d6dfa; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+    .history { text-align: left; margin-top: 24px; }
+    #history { max-height: 170px; overflow: auto; padding-left: 22px; }
+    details { margin-top: 18px; text-align: left; }
+    textarea { display: block; width: 100%; min-height: 78px; margin: 10px 0; }
+    .note { font-size: .85rem; line-height: 1.5; }
+    .tag { color: #ffd84d; font-size: .8rem; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>🎲 Lucky Roll</h1>
+  <div class="sub">A just-for-fun roll demo. No real money or prizes.</div>
+
+  <div class="balance">Balance: <strong id="balance">0</strong> coins</div>
+  <div class="orb" id="orb" aria-live="polite">Ready?</div>
+  <button id="roll">Roll (10 coins)</button>
+
+  <section class="history">
+    <strong>Recent rolls</strong>
+    <ol id="history"></ol>
+  </section>
+
+  <details>
+    <summary>Save: export / import</summary>
+    <p class="note">Export copies this browser’s progress into a shareable string. Imported data is checked for accidental changes, but this is not cheat-proof.</p>
+    <div class="actions">
+      <button id="export">Export save</button>
+      <button id="import">Import save</button>
+      <button id="reset">Reset browser save</button>
+    </div>
+    <textarea id="saveText" placeholder="Exported save appears here; paste a save here to import."></textarea>
+    <div id="saveMessage" class="note" aria-live="polite"></div>
+  </details>
+
+  <p class="note">
+    Rare-roll history is stored only in this browser and in exported saves.
+    GitHub Pages cannot write visitor rolls back into <code>stats.json</code>.
+  </p>
+</main>
+
+<script>
+(() => {
+  const COST = 10;
+  const STARTING_BALANCE = 1000;
+  const STORAGE_KEY = "lucky-roll-save-v1";
+
+  // Weights are relative: these add up to 100,000.
+  const RARITY = [
+    { name: "Common",   weight: 70000, payout: 5,   emoji: "⚪" },
+    { name: "Uncommon", weight: 20000, payout: 15,  emoji: "🟢" },
+    { name: "Rare",     weight: 8000,  payout: 60,  emoji: "🔵" },
+    { name: "Epic",     weight: 1800,  payout: 250, emoji: "🟣" },
+    { name: "Legendary",weight: 199,  payout: 2000,emoji: "🟠" },
+    { name: "Mythic",   weight: 1,     payout: 10000,emoji: "🌈" }
+  ];
+
+  const $ = id => document.getElementById(id);
+  const freshSave = () => ({
+    balance: STARTING_BALANCE,
+    rolls: 0,
+    rareRolls: [],
+    recent: []
+  });
+
+  function readSave() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      if (parsed && Number.isFinite(parsed.balance) &&
+          Number.isInteger(parsed.rolls) && Array.isArray(parsed.rareRolls) &&
+          Array.isArray(parsed.recent)) return parsed;
+    } catch {}
+    return freshSave();
+  }
+
+  let save = readSave();
+  function persist() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(save));
+    render();
+  }
+
+  function render() {
+    $("balance").textContent = save.balance.toLocaleString();
+    $("history").innerHTML = "";
+    save.recent.slice(0, 10).forEach(item => {
+      const li = document.createElement("li");
+      li.textContent = `${item.emoji} ${item.name} — ${item.payout} coins`;
+      if (item.rare) {
+        const tag = document.createElement("span");
+        tag.className = "tag";
+        tag.textContent = "  RARE";
+        li.appendChild(tag);
+      }
+      $("history").appendChild(li);
+    });
+    $("roll").disabled = save.balance < COST;
+    if (save.balance < COST) $("roll").textContent = "Not enough coins";
+    else $("roll").textContent = `Roll (${COST} coins)`;
+  }
+
+  // Crypto randomness is available in modern browsers and is better than Math.random.
+  function randomBelow(max) {
+    const range = 0x100000000;
+    const limit = Math.floor(range / max) * max;
+    const array = new Uint32Array(1);
+    do { crypto.getRandomValues(array); } while (array[0] >= limit);
+    return array[0] % max;
+  }
+
+  function pickResult() {
+    const total = RARITY.reduce((sum, item) => sum + item.weight, 0);
+    let value = randomBelow(total);
+    for (const item of RARITY) {
+      value -= item.weight;
+      if (value < 0) return item;
+    }
+    return RARITY[0];
+  }
+
+  async function roll() {
+    if (save.balance < COST) return;
+    save.balance -= COST;
+    $("roll").disabled = true;
+    const orb = $("orb");
+    orb.className = "orb rolling";
+    for (let i = 0; i < 12; i++) {
+      const preview = RARITY[randomBelow(RARITY.length)];
+      orb.textContent = `${preview.emoji} ${preview.name}`;
+      await new Promise(resolve => setTimeout(resolve, 65 + i * 8));
+    }
+
+    const result = pickResult();
+    const isRare = result.weight <= 8000;
+    save.balance += result.payout;
+    save.rolls += 1;
+    const entry = {
+      name: result.name,
+      emoji: result.emoji,
+      payout: result.payout,
+      rare: isRare,
+      time: new Date().toISOString()
+    };
+    save.recent.unshift(entry);
+    save.recent = save.recent.slice(0, 30);
+    if (isRare) {
+      save.rareRolls.unshift({ ...entry, rollNumber: save.rolls });
+      save.rareRolls = save.rareRolls.slice(0, 500);
+    }
+
+    orb.className = "orb" + (isRare ? " rare" : "");
+    orb.textContent = `${result.emoji} ${result.name}!`;
+    persist();
+    setTimeout(() => { orb.className = "orb"; }, 900);
+  }
+
+  // Base64 is only an encoding. The SHA-256 digest detects casual edits but
+  // is not a secret signature: users can inspect this code and make another.
+  async function makeEnvelope(data) {
+    const payload = JSON.stringify(data);
+    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(payload));
+    const checksum = Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, "0")).join("");
+    return btoa(unescape(encodeURIComponent(JSON.stringify({ payload, checksum }))));
+  }
+
+  async function decodeEnvelope(text) {
+    const decoded = decodeURIComponent(escape(atob(text.trim())));
+    const envelope = JSON.parse(decoded);
+    if (!envelope || typeof envelope.payload !== "string" || typeof envelope.checksum !== "string") {
+      throw new Error("That save format is not recognized.");
+    }
+    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(envelope.payload));
+    const checksum = Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, "0")).join("");
+    if (checksum !== envelope.checksum) throw new Error("Save check failed; it may have been changed.");
+    const data = JSON.parse(envelope.payload);
+    if (!Number.isFinite(data.balance) || data.balance < 0 ||
+        !Number.isInteger(data.rolls) || data.rolls < 0 ||
+        !Array.isArray(data.rareRolls) || !Array.isArray(data.recent)) {
+      throw new Error("Save data is invalid.");
+    }
+    return data;
+  }
+
+  $("roll").addEventListener("click", roll);
+
+  $("export").addEventListener("click", async () => {
+    try {
+      $("saveText").value = await makeEnvelope(save);
+      $("saveMessage").textContent = "Save exported. Copy the text to keep it.";
+    } catch {
+      $("saveMessage").textContent = "Could not export the save in this browser.";
+    }
+  });
+
+  $("import").addEventListener("click", async () => {
+    try {
+      save = await decodeEnvelope($("saveText").value);
+      persist();
+      $("saveMessage").textContent = "Save imported.";
+    } catch (error) {
+      $("saveMessage").textContent = error.message || "Could not import that save.";
+    }
+  });
+
+  $("reset").addEventListener("click", () => {
+    if (!confirm("Reset this browser's save? This cannot be undone.")) return;
+    save = freshSave();
+    persist();
+    $("saveMessage").textContent = "Browser save reset.";
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
