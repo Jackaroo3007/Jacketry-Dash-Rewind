@@ -23,6 +23,22 @@
     button:disabled { cursor: wait; opacity: .6; }
     #roll { width: 100%; padding: 15px; background: #6957e8; font-weight: 800; }
     #roll:hover { background: #7d6dfa; }
+    /* TEMP MYTHIC ANIMATION TEST: remove this rule with the test button. */
+    #testMythic { width: 100%; margin-top: 10px; border-color: #ffd84d66; color: #ffe68a; }
+    #testMythic:hover { background: #51421b; }
+    .orb.mythic-test { position: relative; overflow: hidden; color: #fff4a8; animation: mythic-reveal 1.4s ease-out; box-shadow: 0 0 35px #ffd84daa, inset 0 0 50px #ff5fd933; }
+    @keyframes mythic-reveal {
+      0% { transform: scale(.2) rotate(-30deg); filter: brightness(3) hue-rotate(0deg); }
+      45% { transform: scale(1.18) rotate(12deg); filter: brightness(1.8) hue-rotate(100deg); }
+      70% { transform: scale(.92) rotate(-6deg); }
+      100% { transform: scale(1) rotate(0); filter: brightness(1) hue-rotate(0deg); }
+    }
+    .sparkle-layer { position: absolute; inset: 0; pointer-events: none; }
+    .sparkle { position: absolute; left: 50%; top: 50%; width: 8px; height: 8px; border-radius: 50%; background: #fff6a8; box-shadow: 0 0 12px 4px #ffd84d; animation: sparkle-burst 1.1s ease-out forwards; }
+    @keyframes sparkle-burst {
+      from { transform: translate(-50%, -50%) scale(.3); opacity: 1; }
+      to { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+    }
     .actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
     .history { text-align: left; margin-top: 24px; }
     #history { max-height: 170px; overflow: auto; padding-left: 22px; }
@@ -39,6 +55,8 @@
     <div class="balance">Points: <strong id="points">0</strong></div>
     <div class="orb" id="orb" aria-live="polite">Ready?</div>
     <button id="roll">Roll</button>
+    <!-- TEMP MYTHIC ANIMATION TEST: remove this button and its handler to remove test mode. -->
+    <button id="testMythic" type="button">🧪 Test Mythic (1 in 10,000) animation</button>
 
     <section class="history">
       <strong>Recent rolls</strong>
@@ -221,6 +239,48 @@
       }
 
       $("roll").addEventListener("click", roll);
+
+      // TEMP MYTHIC ANIMATION TEST: this visual preview never changes the save.
+      $("testMythic").addEventListener("click", testMythicAnimation);
+
+      async function testMythicAnimation() {
+        const rollButton = $("roll");
+        const testButton = $("testMythic");
+        const orb = $("orb");
+        rollButton.disabled = true;
+        testButton.disabled = true;
+        orb.className = "orb rolling";
+
+        for (let i = 0; i < 22; i++) {
+          const preview = RARITY[randomBelow(RARITY.length)];
+          orb.textContent = `${preview.emoji} ${preview.name}`;
+          await delay(55 + i * 12);
+        }
+
+        const mythic = RARITY[0];
+        orb.className = "orb rare mythic-test";
+        orb.textContent = `${mythic.emoji} MYTHIC! +${mythic.points} points`;
+
+        const sparkles = document.createElement("span");
+        sparkles.className = "sparkle-layer";
+        for (let i = 0; i < 32; i++) {
+          const sparkle = document.createElement("i");
+          sparkle.className = "sparkle";
+          const angle = (Math.PI * 2 * i) / 32;
+          const distance = 70 + randomBelow(110);
+          sparkle.style.setProperty("--dx", `${Math.cos(angle) * distance}px`);
+          sparkle.style.setProperty("--dy", `${Math.sin(angle) * distance}px`);
+          sparkle.style.animationDelay = `${randomBelow(180)}ms`;
+          sparkles.appendChild(sparkle);
+        }
+        orb.appendChild(sparkles);
+
+        await delay(2200);
+        orb.className = "orb";
+        orb.textContent = "Ready?";
+        rollButton.disabled = false;
+        testButton.disabled = false;
+      }
 
       $("export").addEventListener("click", async () => {
         try {
