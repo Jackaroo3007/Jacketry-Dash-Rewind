@@ -58,7 +58,8 @@
     .ocean-window.immersive .submersible { width: 120px; height: 38px; }
     .ocean-window.immersive .submersible:before { width: 17px; height: 17px; top: 8px; }
     .ocean-window.immersive .submersible { transition: top 2.4s cubic-bezier(.22,.8,.3,1), left .8s ease; z-index: 3; }
-    .arrival-card { position: absolute; top: 22%; left: 50%; z-index: 7; width: min(560px, 72vw); padding: 22px; border: 1px solid #9ed9cb66; background: #06151ad9; color: #eafff7; text-align: center; transform: translate(-50%, -50%); transition: opacity .6s ease, transform .7s ease; }
+    .arrival-card { display: none; position: absolute; top: 22%; left: 50%; z-index: 7; width: min(560px, 72vw); padding: 22px; border: 1px solid #9ed9cb66; background: #06151ad9; color: #eafff7; text-align: center; transform: translate(-50%, -50%); transition: opacity .6s ease, transform .7s ease; }
+    .ocean-window.immersive .arrival-card { display: block; }
     .arrival-kicker { display: block; margin-bottom: 7px; color: #8af2ce; font-size: .7rem; font-weight: 800; letter-spacing: .22em; }
     .arrival-card strong { display: block; font-size: clamp(1.6rem, 5vw, 3rem); letter-spacing: .04em; }
     .arrival-depth { display: block; margin-top: 5px; color: #acd0c9; }
