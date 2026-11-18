@@ -95,9 +95,12 @@
     .research-tree { margin-top: 18px; padding: 16px; border: 1px solid #315459; background: #0a1a22; }
     .research-tree h3 { margin: 0 0 5px; font-size: .95rem; }
     .research-tree > p { margin: 0 0 12px; color: var(--muted); font-size: .75rem; line-height: 1.45; }
-    .tree-grid { display: grid; gap: 8px; }
-    .research-node { position: relative; width: 100%; padding: 11px 12px; border: 1px solid #31535a; background: #102831; color: #deefeb; text-align: left; cursor: pointer; }
-    .research-node:not(:last-child):after { content: ""; position: absolute; left: 19px; bottom: -9px; z-index: 1; height: 9px; border-left: 1px solid #4a7775; }
+    .tree-root { position: relative; width: min(240px, 85%); margin: 10px auto 0; padding: 9px; border: 1px solid #62a99a; background: #163a38; color: #dcfff2; font-size: .75rem; text-align: center; }
+    .tree-root:after { content: ""; position: absolute; top: 100%; left: 50%; height: 12px; border-left: 1px solid #4a7775; }
+    .tree-grid { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding-top: 13px; }
+    .tree-grid:before { content: ""; position: absolute; top: 0; left: 16.66%; right: 16.66%; border-top: 1px solid #4a7775; }
+    .research-node { position: relative; width: 100%; min-height: 112px; padding: 11px 12px; border: 1px solid #31535a; background: #102831; color: #deefeb; text-align: left; cursor: pointer; }
+    .research-node:before { content: ""; position: absolute; bottom: 100%; left: 50%; height: 13px; border-left: 1px solid #4a7775; }
     .research-node strong, .research-node span, .research-node small { display: block; }
     .research-node strong { font-size: .8rem; }
     .research-node span { margin-top: 4px; color: #a6c7c0; font-size: .72rem; }
@@ -130,6 +133,10 @@
       .layout { grid-template-columns: 1fr; }
       .side-panel { order: 2; }
       .map-panel { order: 3; }
+      .tree-grid { grid-template-columns: 1fr; padding: 12px 0 0 18px; }
+      .tree-grid:before { top: 0; bottom: 0; left: 7px; right: auto; border-top: 0; border-left: 1px solid #4a7775; }
+      .research-node { min-height: 0; }
+      .research-node:before { left: auto; right: 100%; bottom: 50%; width: 11px; height: 0; border-left: 0; border-top: 1px solid #4a7775; }
       .route { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .route-stop:last-child { grid-column: span 2; }
     }
@@ -239,16 +246,17 @@
         </div>
         <section class="research-tree" aria-labelledby="researchTitle">
           <h3 id="researchTitle">Research tree</h3>
-          <p>Spend permanent cores to unlock powerful improvements. Research survives every descent.</p>
+          <p>Choose any path in any order. Every branch is open from the start, and research survives every descent.</p>
+          <div class="tree-root"><strong>Survey Network</strong> · all paths open</div>
           <div class="tree-grid">
             <button class="research-node" id="researchPressure" type="button">
               <strong>Pressure Mathematics</strong><span id="pressureStatus">2 cores</span><small>Multiply all research output by 1.15×</small>
             </button>
             <button class="research-node" id="researchLabs" type="button">
-              <strong>Autonomous Labs</strong><span id="labsResearchStatus">3 cores · requires Pressure Mathematics</span><small>Double lab output; unlock Deep Labs</small>
+              <strong>Autonomous Labs</strong><span id="labsResearchStatus">3 cores</span><small>Double lab output; unlock Deep Labs</small>
             </button>
             <button class="research-node" id="researchAbyssal" type="button">
-              <strong>Abyssal Engineering</strong><span id="abyssalStatus">5 cores · requires Autonomous Labs</span><small>Multiply output by 1.25×; unlock Deep Survey Subs</small>
+              <strong>Abyssal Engineering</strong><span id="abyssalStatus">5 cores</span><small>Multiply output by 1.25×; unlock Deep Survey Subs</small>
             </button>
           </div>
         </section>
@@ -311,8 +319,8 @@
       const freshState = () => ({ depth: 0, data: 0, labs: 0, subs: 0, advancedLabs: 0, deepSubs: 0, cores: 0, coreLevels: 0, research: [], fieldNotes: 0, rebirths: 0, archiveSeals: 0, archiveAscensions: 0, lastTick: Date.now() });
       const RESEARCH = [
         { id: "pressure", label: "Pressure Mathematics", button: "researchPressure", status: "pressureStatus", cost: 2, requires: null },
-        { id: "labs", label: "Autonomous Labs", button: "researchLabs", status: "labsResearchStatus", cost: 3, requires: "pressure" },
-        { id: "abyssal", label: "Abyssal Engineering", button: "researchAbyssal", status: "abyssalStatus", cost: 5, requires: "labs" }
+        { id: "labs", label: "Autonomous Labs", button: "researchLabs", status: "labsResearchStatus", cost: 3, requires: null },
+        { id: "abyssal", label: "Abyssal Engineering", button: "researchAbyssal", status: "abyssalStatus", cost: 5, requires: null }
       ];
       let state = banned ? freshState() : loadState();
       let lastFrame = Date.now();
@@ -553,15 +561,13 @@
         tweenNumber("coreCount", state.cores);
         document.getElementById("coreCost").textContent = "Cost: 5 cores · +" + (state.coreLevels + 1) * 25 + "% output";
         document.getElementById("buyCore").disabled = state.cores < 5 || banned;
-        const researchLookup = Object.fromEntries(RESEARCH.map(node => [node.id, node]));
         for (const node of RESEARCH) {
           const unlocked = hasResearch(state, node.id);
-          const prerequisiteMet = !node.requires || hasResearch(state, node.requires);
           const button = document.getElementById(node.button);
           button.classList.toggle("unlocked", unlocked);
-          button.disabled = banned || unlocked || !prerequisiteMet || state.cores < node.cost;
+          button.disabled = banned || unlocked || state.cores < node.cost;
           const status = document.getElementById(node.status);
-          status.textContent = unlocked ? "UNLOCKED" : (node.cost + " cores" + (node.requires ? " · requires " + researchLookup[node.requires].label : ""));
+          status.textContent = unlocked ? "UNLOCKED" : (node.cost + " cores · path open");
         }
         document.getElementById("deepLabUpgrade").hidden = !hasResearch(state, "labs");
         document.getElementById("deepSubUpgrade").hidden = !hasResearch(state, "abyssal");
@@ -636,8 +642,7 @@
 
       function unlockResearch(id) {
         const node = RESEARCH.find(item => item.id === id);
-        if (!node || banned || hasResearch(state, id) ||
-            (node.requires && !hasResearch(state, node.requires)) || state.cores < node.cost) return;
+        if (!node || banned || hasResearch(state, id) || state.cores < node.cost) return;
         state.cores -= node.cost;
         state.research.push(id);
         announce(node.id === "pressure" ? "Pressure Mathematics unlocked. Output multiplied by 1.15×." :
