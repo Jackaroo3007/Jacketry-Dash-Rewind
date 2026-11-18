@@ -83,6 +83,15 @@
     .cores-top { display: flex; justify-content: space-between; gap: 10px; align-items: center; }
     .cores-top strong { color: var(--gold); font-size: 1.2rem; }
     .cores-box p { margin: 7px 0 12px; color: #c4b996; font-size: .78rem; line-height: 1.45; }
+    .rebirth-box { margin-top: 17px; padding: 15px; border: 1px solid #487970; background: linear-gradient(120deg, #102e33, #112820); }
+    .rebirth-box.archive { border-color: #887342; background: linear-gradient(120deg, #302a1d, #191f27); }
+    .rebirth-box h3 { margin: 0 0 5px; font-size: .95rem; }
+    .rebirth-box p { margin: 0 0 11px; color: #a8c3bd; font-size: .76rem; line-height: 1.5; }
+    .layer-stat { display: block; margin-top: 5px; color: var(--gold); font-size: .7rem; }
+    .layer-button { width: 100%; padding: 11px; border: 1px solid #559386; background: #19443f; color: #e4fff4; cursor: pointer; font-weight: 750; }
+    .archive .layer-button { border-color: #a48a4d; background: #4a3c25; }
+    .layer-button small { display: block; margin-top: 4px; color: #bfd6ca; font-weight: 500; }
+    .layer-button:disabled { cursor: not-allowed; }
     .research-tree { margin-top: 18px; padding: 16px; border: 1px solid #315459; background: #0a1a22; }
     .research-tree h3 { margin: 0 0 5px; font-size: .95rem; }
     .research-tree > p { margin: 0 0 12px; color: var(--muted); font-size: .75rem; line-height: 1.45; }
@@ -169,7 +178,7 @@
             <div class="section-label">Research data</div>
             <div class="resource-value" id="dataValue">0</div>
           </div>
-          <div class="rate"><strong id="rateValue">0</strong><br>data per second</div>
+          <div class="rate"><strong id="rateValue">0</strong><br>data per second<br><span class="layer-stat" id="layerBoost">Layer bonus ×1.0</span></div>
         </div>
         <button class="dive-button" id="diveButton" disabled>
           <span id="diveTitle">DESCEND TO TWILIGHT REACH</span>
@@ -180,6 +189,26 @@
           <div class="progress-fill" id="progressFill"></div>
         </div>
         <p class="zone-copy">Research data keeps accumulating; this bar only tracks the requirement for the next descent.</p>
+
+        <section class="rebirth-box" aria-labelledby="rebirthTitle">
+          <h3 id="rebirthTitle">Layer 2 · Expedition Rebirth</h3>
+          <p>After the Hadal Trench, restart at the surface. Keep your research and cores, gain permanent Field Notes, and make future expeditions faster.</p>
+          <button class="layer-button" id="rebirthButton" type="button" disabled>
+            Rebirth the expedition
+            <small id="rebirthHint">Unlocks after reaching the unmapped trenches</small>
+          </button>
+          <span class="layer-stat" id="fieldNotesStat">Field Notes: 0 · Rebirths: 0 · ×1.0 output</span>
+        </section>
+
+        <section class="rebirth-box archive" aria-labelledby="archiveTitle">
+          <h3 id="archiveTitle">Layer 3 · Ocean Archive</h3>
+          <p>At 10 Field Notes, archive the expedition. This resets depth, station upgrades, cores, and research for a permanent ×3 output seal.</p>
+          <button class="layer-button" id="archiveButton" type="button" disabled>
+            Ascend to the Ocean Archive
+            <small id="archiveHint">Requires 10 Field Notes</small>
+          </button>
+          <span class="layer-stat" id="archiveStat">Archive Seals: 0 · Ascensions: 0 · ×1.0 output</span>
+        </section>
         <p class="notice" id="notice" aria-live="polite"></p>
       </main>
 
@@ -254,7 +283,9 @@
 
   <script>
     (() => {
-      const SAVE_KEY = "deep-signal-idle-v1";
+      const SAVE_KEY = "deep-signal-idle-v2";
+      const SAVE_VERSION = 2;
+      localStorage.removeItem("deep-signal-idle-v1");
       const BAN_KEY = "deep-signal-local-lock-v1";
       const BAN_DURATION = 5 * 60 * 1000;
       let bannedUntil = 0;
@@ -271,13 +302,13 @@
       }
       let banned = bannedUntil > Date.now();
       const ZONES = [
-        { name: "Sunlit Shelf", depth: "200 m", cost: 100, copy: "A calm beginning. Set up your first research station.", caption: "Light reaches the seafloor" },
-        { name: "Twilight Reach", depth: "900 m", cost: 450, copy: "Blue light fades. Strange signals drift up from below.", caption: "The last blue light" },
-        { name: "Midnight Zone", depth: "2,800 m", cost: 2500, copy: "No sunlight reaches here. Your instruments become essential.", caption: "Dark water, distant signals" },
-        { name: "Abyssal Plain", depth: "4,500 m", cost: 16000, copy: "A vast, quiet plain stretches beyond the reach of daylight.", caption: "An ocean without a horizon" },
-        { name: "Hadal Trench", depth: "8,000 m", cost: 120000, copy: "The trench walls close in. Every discovery changes the mission.", caption: "Pressure rising" }
+        { name: "Sunlit Shelf", depth: "200 m", cost: 80, copy: "A calm beginning. Set up your first research station.", caption: "Light reaches the seafloor" },
+        { name: "Twilight Reach", depth: "900 m", cost: 350, copy: "Blue light fades. Strange signals drift up from below.", caption: "The last blue light" },
+        { name: "Midnight Zone", depth: "2,800 m", cost: 1400, copy: "No sunlight reaches here. Your instruments become essential.", caption: "Dark water, distant signals" },
+        { name: "Abyssal Plain", depth: "4,500 m", cost: 5500, copy: "A vast, quiet plain stretches beyond the reach of daylight.", caption: "An ocean without a horizon" },
+        { name: "Hadal Trench", depth: "8,000 m", cost: 22000, copy: "The trench walls close in. Every discovery changes the mission.", caption: "Pressure rising" }
       ];
-      const freshState = () => ({ depth: 0, data: 0, labs: 0, subs: 0, advancedLabs: 0, deepSubs: 0, cores: 0, coreLevels: 0, research: [], lastTick: Date.now() });
+      const freshState = () => ({ depth: 0, data: 0, labs: 0, subs: 0, advancedLabs: 0, deepSubs: 0, cores: 0, coreLevels: 0, research: [], fieldNotes: 0, rebirths: 0, archiveSeals: 0, archiveAscensions: 0, lastTick: Date.now() });
       const RESEARCH = [
         { id: "pressure", label: "Pressure Mathematics", button: "researchPressure", status: "pressureStatus", cost: 2, requires: null },
         { id: "labs", label: "Autonomous Labs", button: "researchLabs", status: "labsResearchStatus", cost: 3, requires: "pressure" },
@@ -315,6 +346,10 @@
           (payload.research === undefined || (Array.isArray(payload.research) && payload.research.every(id => ["pressure", "labs", "abyssal"].includes(id)))) &&
           (payload.advancedLabs === undefined || (Number.isInteger(payload.advancedLabs) && payload.advancedLabs >= 0)) &&
           (payload.deepSubs === undefined || (Number.isInteger(payload.deepSubs) && payload.deepSubs >= 0)) &&
+          Number.isInteger(payload.fieldNotes) && payload.fieldNotes >= 0 &&
+          Number.isInteger(payload.rebirths) && payload.rebirths >= 0 &&
+          Number.isInteger(payload.archiveSeals) && payload.archiveSeals >= 0 &&
+          Number.isInteger(payload.archiveAscensions) && payload.archiveAscensions >= 0 &&
           Number.isFinite(payload.lastTick);
       }
 
@@ -323,7 +358,7 @@
           const stored = localStorage.getItem(SAVE_KEY);
           if (!stored) return freshState();
           let raw = JSON.parse(stored);
-          if (raw && raw.game === "deep-signal" && raw.version === 1 && raw.payload) {
+          if (raw && raw.game === "deep-signal" && raw.version === SAVE_VERSION && raw.payload) {
             if (raw.checksum !== checksum(raw.payload) || !isValidPayload(raw.payload)) return lockForTampering();
             raw = raw.payload;
           } else if (!raw || !Number.isFinite(raw.data) || !Number.isInteger(raw.depth)) {
@@ -339,6 +374,10 @@
             cores: Math.max(0, Math.floor(raw.cores || 0)),
             coreLevels: Math.max(0, Math.floor(raw.coreLevels || 0)),
             research: Array.isArray(raw.research) ? [...new Set(raw.research)] : [],
+            fieldNotes: Math.max(0, Math.floor(raw.fieldNotes || 0)),
+            rebirths: Math.max(0, Math.floor(raw.rebirths || 0)),
+            archiveSeals: Math.max(0, Math.floor(raw.archiveSeals || 0)),
+            archiveAscensions: Math.max(0, Math.floor(raw.archiveAscensions || 0)),
             lastTick: Number.isFinite(raw.lastTick) ? raw.lastTick : Date.now()
           };
           const offlineSeconds = Math.min(8 * 60 * 60, Math.max(0, (Date.now() - saved.lastTick) / 1000));
@@ -358,7 +397,7 @@
         return {
           name: "Unmapped Trench " + extra,
           depth: (8000 + extra * 1800).toLocaleString() + " m",
-          cost: Math.ceil(120000 * Math.pow(7.5, extra)),
+          cost: Math.ceil(30000 * Math.pow(1.55, extra - 1)),
           copy: "An unexplored trench beyond the old charts. Your expedition is making history.",
           caption: "Unmapped water — signal detected"
         };
@@ -373,7 +412,9 @@
         let base = 0.4 + source.labs * labRate + source.subs * 2 +
           (source.advancedLabs || 0) * 8 + (source.deepSubs || 0) * 24;
         let multiplier = (1 + source.depth * 0.42) *
-          (1 + source.cores * 0.12 + source.coreLevels * 0.25);
+          (1 + source.cores * 0.12 + source.coreLevels * 0.25) *
+          (1 + (source.fieldNotes || 0) * 0.65) *
+          Math.pow(3, source.archiveSeals || 0);
         if (hasResearch(source, "pressure")) multiplier *= 1.15;
         if (hasResearch(source, "abyssal")) multiplier *= 1.25;
         return base * multiplier;
@@ -430,7 +471,7 @@
         state.lastTick = Date.now();
         try {
           const payload = { ...state };
-          const envelope = { game: "deep-signal", version: 1, payload, checksum: checksum(payload) };
+          const envelope = { game: "deep-signal", version: SAVE_VERSION, payload, checksum: checksum(payload) };
           localStorage.setItem(SAVE_KEY, JSON.stringify(envelope));
           document.getElementById("saveStatus").textContent = "Progress saves in this browser.";
         } catch {
@@ -480,6 +521,19 @@
         document.getElementById("windowCaption").textContent = zone.caption;
         tweenNumber("dataValue", state.data);
         tweenNumber("rateValue", rate);
+        const layerMultiplier = (1 + state.fieldNotes * 0.65) * Math.pow(3, state.archiveSeals);
+        document.getElementById("layerBoost").textContent = "Layer bonus ×" + layerMultiplier.toFixed(1);
+        document.getElementById("fieldNotesStat").textContent = "Field Notes: " + state.fieldNotes + " · Rebirths: " + state.rebirths + " · ×" + (1 + state.fieldNotes * 0.65).toFixed(1) + " output";
+        document.getElementById("archiveStat").textContent = "Archive Seals: " + state.archiveSeals + " · Ascensions: " + state.archiveAscensions + " · ×" + Math.pow(3, state.archiveSeals).toFixed(1) + " output";
+        const rebirthReward = Math.max(1, Math.floor(state.depth / 2));
+        document.getElementById("rebirthButton").disabled = banned || state.depth < 5;
+        document.getElementById("rebirthHint").textContent = state.depth < 5
+          ? "Unlocks after reaching the unmapped trenches"
+          : "Restart at the surface for +" + rebirthReward + " Field Notes (permanent output bonus)";
+        document.getElementById("archiveButton").disabled = banned || state.fieldNotes < 10;
+        document.getElementById("archiveHint").textContent = state.fieldNotes < 10
+          ? "Requires " + (10 - state.fieldNotes) + " more Field Notes"
+          : "Reset the expedition layers for +1 permanent Archive Seal";
         document.getElementById("progressFill").style.width = progress + "%";
         document.getElementById("progressBar").setAttribute("aria-valuenow", String(Math.floor(progress)));
         document.getElementById("progressValue").textContent = format(state.data) + " / " + format(zone.cost) + " data";
@@ -610,7 +664,7 @@
       });
       document.getElementById("diveButton").addEventListener("click", () => {
         const zone = zoneAt(state.depth);
-        if (state.data < zone.cost) return;
+        if (banned || state.data < zone.cost) return;
         const earned = 1 + Math.floor(state.depth / 2);
         state.cores += earned;
         state.depth += 1;
@@ -623,6 +677,35 @@
         render();
         save();
       });
+      document.getElementById("rebirthButton").addEventListener("click", () => {
+        if (banned || state.depth < 5) return;
+        const reward = Math.max(1, Math.floor(state.depth / 2));
+        state.fieldNotes += reward;
+        state.rebirths += 1;
+        state.depth = 0;
+        state.data = 0;
+        state.labs = 0;
+        state.subs = 0;
+        state.advancedLabs = 0;
+        state.deepSubs = 0;
+        announce("Expedition reborn. +" + reward + " Field Notes permanently speed up production.");
+        render();
+        save();
+      });
+
+      document.getElementById("archiveButton").addEventListener("click", () => {
+        if (banned || state.fieldNotes < 10) return;
+        if (!window.confirm("Archive this expedition? This resets depth, upgrades, cores, research, and Field Notes for a permanent ×3 Archive Seal.")) return;
+        const seals = state.archiveSeals + 1;
+        const ascensions = state.archiveAscensions + 1;
+        state = freshState();
+        state.archiveSeals = seals;
+        state.archiveAscensions = ascensions;
+        announce("Ocean Archive ascended. A permanent ×3 Archive Seal is active.");
+        render();
+        save();
+      });
+
       document.getElementById("unbanTest").addEventListener("click", () => {
         if (!banned) return;
         banned = false;
@@ -641,7 +724,7 @@
         if (banned) return;
         state.lastTick = Date.now();
         const payload = { ...state };
-        const envelope = { game: "deep-signal", version: 1, payload, checksum: checksum(payload) };
+        const envelope = { game: "deep-signal", version: SAVE_VERSION, payload, checksum: checksum(payload) };
         const blob = new Blob([JSON.stringify(envelope, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
@@ -659,8 +742,16 @@
         if (!file) return;
         try {
           const envelope = JSON.parse(await file.text());
-          if (!envelope || envelope.game !== "deep-signal" || envelope.version !== 1 ||
-              !envelope.payload || envelope.checksum !== checksum(envelope.payload) ||
+          if (!envelope || envelope.game !== "deep-signal") {
+            lockForTampering();
+            render();
+            return;
+          }
+          if (envelope.version !== SAVE_VERSION) {
+            announce("This save is from an older version. The redesigned game starts fresh, so it cannot be imported.");
+            return;
+          }
+          if (!envelope.payload || envelope.checksum !== checksum(envelope.payload) ||
               !isValidPayload(envelope.payload)) {
             lockForTampering();
             render();
@@ -671,7 +762,11 @@
             ...envelope.payload,
             research: Array.isArray(envelope.payload.research) ? [...new Set(envelope.payload.research)] : [],
             advancedLabs: envelope.payload.advancedLabs || 0,
-            deepSubs: envelope.payload.deepSubs || 0
+            deepSubs: envelope.payload.deepSubs || 0,
+            fieldNotes: envelope.payload.fieldNotes || 0,
+            rebirths: envelope.payload.rebirths || 0,
+            archiveSeals: envelope.payload.archiveSeals || 0,
+            archiveAscensions: envelope.payload.archiveAscensions || 0
           };
           const offlineSeconds = Math.min(8 * 60 * 60, Math.max(0, (Date.now() - state.lastTick) / 1000));
           state.data += rateFor(state) * offlineSeconds;
