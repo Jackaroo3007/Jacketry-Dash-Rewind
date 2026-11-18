@@ -48,6 +48,8 @@
     .ocean-window.midnight { background: radial-gradient(ellipse at 42% 52%, #0a2029 0%, #06131b 45%, #02070c 100%); }
     .ocean-window.abyss { background: radial-gradient(ellipse at 45% 58%, #07131a 0%, #03090e 45%, #010407 100%); }
     .ocean-window.hadal { background: radial-gradient(ellipse at 44% 62%, #071014 0%, #020609 42%, #000204 100%); }
+    .ocean-window.midnight .beam { opacity: .25; }
+    .ocean-window.abyss .beam, .ocean-window.hadal .beam { opacity: .05; }
     .ocean-window.immersive { position: fixed; inset: 0; z-index: 10000; width: 100vw; height: 100vh; height: 100dvh; margin: 0; border: 0; }
     body.descent-scene-open { overflow: hidden; }
     .scene-close { display: none; position: absolute; top: 18px; left: 18px; z-index: 8; padding: 10px 13px; border: 1px solid #9ac5bb99; background: #06131acc; color: #ecfff7; cursor: pointer; font: inherit; }
@@ -198,7 +200,7 @@
           <div class="surface-line" id="surfaceLine"><span>OCEAN SURFACE · 0 m</span></div>
           <div class="beam"></div><div class="beam two"></div>
           <div class="submersible" id="submersible"></div>
-          <div class="window-caption" id="windowCaption">Light reaches the seafloor</div>
+          <div class="window-caption" id="windowCaption">The surface glimmers above</div>
           <div class="depth-ruler" aria-label="Scrolling depth scale">
             <div class="ruler-title">DEPTH</div>
             <div class="depth-scale-window" id="depthScaleWindow"><div class="depth-scale-list" id="depthScaleList"></div></div>
@@ -335,8 +337,8 @@
       }
       let banned = bannedUntil > Date.now();
       const ZONES = [
-        { name: "Sunlit Shelf", depth: "200 m", cost: 80, copy: "A calm beginning. Set up your first research station.", caption: "Light reaches the seafloor" },
-        { name: "Twilight Reach", depth: "800 m", cost: 350, copy: "Blue light fades. Strange signals drift up from below.", caption: "The last blue light" },
+        { name: "Sunlit Shelf", depth: "200 m", cost: 80, copy: "A calm beginning. Set up your first research station.", caption: "The surface glimmers above" },
+        { name: "Twilight Reach", depth: "800 m", cost: 350, copy: "Blue light fades. Strange signals drift up from below.", caption: "Sunlight fades overhead" },
         { name: "Midnight Zone", depth: "2,800 m", cost: 1400, copy: "No sunlight reaches here. Your instruments become essential.", caption: "Dark water, distant signals" },
         { name: "Abyssal Plain", depth: "4,500 m", cost: 5500, copy: "A vast, quiet plain stretches beyond the reach of daylight.", caption: "An ocean without a horizon" },
         { name: "Hadal Trench", depth: "8,000 m", cost: 22000, copy: "The trench walls close in. Every discovery changes the mission.", caption: "Pressure rising" }
