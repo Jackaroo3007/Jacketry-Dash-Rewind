@@ -154,14 +154,15 @@
           </div>
           <div class="rate"><strong id="rateValue">0</strong><br>data per second</div>
         </div>
-        <div class="progress-track" role="progressbar" aria-label="Progress toward next descent" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progressBar">
-          <div class="progress-fill" id="progressFill"></div>
-        </div>
-        <div class="progress-copy"><span id="progressLabel">Data needed to descend</span><span id="progressValue">0 / 100 data</span><span id="diveEta">Calculating time…</span></div>
         <button class="dive-button" id="diveButton" disabled>
           <span id="diveTitle">DESCEND TO TWILIGHT REACH</span>
           <small id="diveHint">Requires 100 research data · earns 1 research core</small>
         </button>
+        <div class="progress-copy"><span id="progressLabel">Progress toward next descent</span><span id="progressValue">0 / 100 data</span><span id="diveEta">Calculating time…</span></div>
+        <div class="progress-track" role="progressbar" aria-label="Progress toward next descent requirement; research data has no cap" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progressBar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <p class="zone-copy">Research data keeps accumulating; this bar only tracks the requirement for the next descent.</p>
         <p class="notice" id="notice" aria-live="polite"></p>
       </main>
 
