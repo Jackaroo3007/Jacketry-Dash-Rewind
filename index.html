@@ -78,6 +78,7 @@
     .save-tools button:hover, .save-tools label:hover { border-color: var(--mint); background: #194044; }
     .integrity-note { grid-column: 1 / -1; margin: 0; color: #829b99; font-size: .7rem; line-height: 1.45; }
     .ban-banner { margin: -7px 0 18px; padding: 12px 15px; border: 1px solid #a85d54; background: #381d20; color: #ffd5cc; font-size: .85rem; line-height: 1.5; }
+    .ban-unlock { margin-left: 10px; padding: 6px 9px; border: 1px solid #c78668; background: #532d2b; color: #ffe0cf; cursor: pointer; font: inherit; font-size: .75rem; }
     .cores-box { margin-top: 15px; padding: 15px; border: 1px solid #63563b; background: #29271d; }
     .cores-top { display: flex; justify-content: space-between; gap: 10px; align-items: center; }
     .cores-top strong { color: var(--gold); font-size: 1.2rem; }
@@ -127,7 +128,10 @@
       </div>
       <div class="header-note">An idle expedition<br>to the ocean floor</div>
     </header>
-    <div class="ban-banner" id="banBanner" role="alert" hidden>Save integrity check failed. This browser is locked from play. This local-only check cannot ban an account across devices.</div>
+    <div class="ban-banner" id="banBanner" role="alert" hidden>
+      <span id="banMessage">Save integrity check failed.</span>
+      <button class="ban-unlock" id="unbanTest" type="button">Unban (test)</button>
+    </div>
 
     <div class="layout">
       <main class="panel main-panel">
@@ -195,7 +199,7 @@
           <button type="button" id="exportSave">Export save (.json)</button>
           <label for="importSave">Import save (.json)</label>
           <input id="importSave" type="file" accept="application/json,.json" hidden>
-          <p class="integrity-note">Save checks catch edited or damaged files in this browser. Because this game runs locally, the check is not server-secure and cannot enforce an account-wide ban.</p>
+          <p class="integrity-note">A save mismatch locks play in this browser for five minutes. The unban button is a temporary testing control; this browser-only check is not server-secure.</p>
         </div>
       </aside>
     </div>
@@ -214,7 +218,20 @@
     (() => {
       const SAVE_KEY = "deep-signal-idle-v1";
       const BAN_KEY = "deep-signal-local-lock-v1";
-      let banned = localStorage.getItem(BAN_KEY) === "locked";
+      const BAN_DURATION = 5 * 60 * 1000;
+      let bannedUntil = 0;
+      const storedBan = localStorage.getItem(BAN_KEY);
+      if (storedBan === "locked") {
+        bannedUntil = Date.now() + BAN_DURATION;
+        localStorage.setItem(BAN_KEY, String(bannedUntil));
+      } else {
+        bannedUntil = Number(storedBan) || 0;
+        if (bannedUntil <= Date.now()) {
+          localStorage.removeItem(BAN_KEY);
+          bannedUntil = 0;
+        }
+      }
+      let banned = bannedUntil > Date.now();
       const ZONES = [
         { name: "Sunlit Shelf", depth: "200 m", cost: 100, copy: "A calm beginning. Set up your first research station.", caption: "Light reaches the seafloor" },
         { name: "Twilight Reach", depth: "900 m", cost: 450, copy: "Blue light fades. Strange signals drift up from below.", caption: "The last blue light" },
@@ -240,7 +257,8 @@
 
       function lockForTampering() {
         banned = true;
-        try { localStorage.setItem(BAN_KEY, "locked"); } catch {}
+        bannedUntil = Date.now() + BAN_DURATION;
+        try { localStorage.setItem(BAN_KEY, String(bannedUntil)); } catch {}
         return freshState();
       }
 
@@ -356,6 +374,12 @@
       }
 
       function render() {
+        if (banned && Date.now() >= bannedUntil) {
+          banned = false;
+          bannedUntil = 0;
+          try { localStorage.removeItem(BAN_KEY); } catch {}
+          state = freshState();
+        }
         const zone = zoneAt(state.depth);
         const next = zoneAt(state.depth + 1);
         const rate = rateFor(state);
@@ -392,7 +416,11 @@
         document.getElementById("exportSave").disabled = banned;
         document.getElementById("importSave").disabled = banned;
         document.getElementById("banBanner").hidden = !banned;
-        if (banned) document.getElementById("saveStatus").textContent = "This browser is locked after a save integrity mismatch.";
+        document.getElementById("unbanTest").disabled = !banned;
+        document.getElementById("banMessage").textContent = "Save mismatch detected. Play locked for " + formatDuration((bannedUntil - Date.now()) / 1000) + ".";
+        document.getElementById("saveStatus").textContent = banned
+          ? "This browser is temporarily locked after a save integrity mismatch."
+          : "Progress saves in this browser.";
         document.getElementById("chartStatus").textContent = state.depth >= ZONES.length ? "Beyond the mapped zones" : (ZONES.length - state.depth) + " zone" + (ZONES.length - state.depth === 1 ? "" : "s") + " ahead";
         const route = document.getElementById("route");
         route.replaceChildren();
@@ -454,6 +482,20 @@
         render();
         save();
       });
+      document.getElementById("unbanTest").addEventListener("click", () => {
+        if (!banned) return;
+        banned = false;
+        bannedUntil = 0;
+        state = freshState();
+        try {
+          localStorage.removeItem(BAN_KEY);
+          localStorage.removeItem(SAVE_KEY);
+        } catch {}
+        render();
+        save();
+        announce("Test unban applied. A fresh expedition has started.");
+      });
+
       document.getElementById("exportSave").addEventListener("click", () => {
         if (banned) return;
         state.lastTick = Date.now();
