@@ -57,6 +57,21 @@
     .ocean-window.immersive .window-caption { bottom: 26px; left: 28px; font-size: .9rem; }
     .ocean-window.immersive .submersible { width: 120px; height: 38px; }
     .ocean-window.immersive .submersible:before { width: 17px; height: 17px; top: 8px; }
+    .ocean-window.immersive .submersible { transition: top 2.4s cubic-bezier(.22,.8,.3,1), left .8s ease; z-index: 3; }
+    .arrival-card { position: absolute; top: 22%; left: 50%; z-index: 7; width: min(560px, 72vw); padding: 22px; border: 1px solid #9ed9cb66; background: #06151ad9; color: #eafff7; text-align: center; transform: translate(-50%, -50%); transition: opacity .6s ease, transform .7s ease; }
+    .arrival-kicker { display: block; margin-bottom: 7px; color: #8af2ce; font-size: .7rem; font-weight: 800; letter-spacing: .22em; }
+    .arrival-card strong { display: block; font-size: clamp(1.6rem, 5vw, 3rem); letter-spacing: .04em; }
+    .arrival-depth { display: block; margin-top: 5px; color: #acd0c9; }
+    .ocean-window.travel-phase .arrival-card { opacity: 0; transform: translate(-50%, -75%); pointer-events: none; }
+    .sea-life { position: absolute; inset: 0; z-index: 2; overflow: hidden; pointer-events: none; }
+    .sea-creature { position: absolute; left: -12%; color: #d9f2e9; font-size: clamp(1.25rem, 3vw, 2.3rem); opacity: .72; filter: drop-shadow(0 0 8px #80e6d066); animation: fish-pass linear infinite; }
+    .ocean-window.abyss .sea-creature, .ocean-window.hadal .sea-creature { opacity: .46; filter: drop-shadow(0 0 11px #6edbcf99); }
+    @keyframes fish-pass {
+      0% { transform: translateX(-12vw) translateY(0) scaleX(1); }
+      45% { transform: translateX(52vw) translateY(-16px) scaleX(1); }
+      50% { transform: translateX(58vw) translateY(-13px) scaleX(-1); }
+      100% { transform: translateX(125vw) translateY(8px) scaleX(-1); }
+    }
     .surface-line { position: absolute; top: 0; left: 0; right: 0; z-index: 2; height: 17px; border-bottom: 2px solid #a8f2e9; background: linear-gradient(180deg, #baf5edcc, #4aabc766 65%, transparent); box-shadow: 0 7px 22px #56d7e388; color: #eaffff; font-size: .62rem; letter-spacing: .12em; text-align: center; }
     .surface-line[hidden] { display: none; }
     .depth-ruler { position: absolute; top: 16px; right: 18px; bottom: 16px; z-index: 4; width: 82px; border: 1px solid #a3d6d355; background: #0310169c; color: #d9efeb; }
@@ -199,6 +214,12 @@
           <button class="scene-close" id="closeDescentScene" type="button">Return to expedition</button>
           <div class="surface-line" id="surfaceLine"><span>OCEAN SURFACE · 0 m</span></div>
           <div class="beam"></div><div class="beam two"></div>
+          <div class="sea-life" id="seaLife" aria-hidden="true"></div>
+          <div class="arrival-card" id="arrivalCard">
+            <span class="arrival-kicker">ARRIVING AT</span>
+            <strong id="arrivalName">Twilight Reach</strong>
+            <span class="arrival-depth" id="arrivalDepth">800 m below sea level</span>
+          </div>
           <div class="submersible" id="submersible"></div>
           <div class="window-caption" id="windowCaption">The surface glimmers above</div>
           <div class="depth-ruler" aria-label="Scrolling depth scale">
@@ -658,23 +679,56 @@
           });
         }
         const sub = document.getElementById("submersible");
-        sub.style.top = (20 + Math.min(state.depth, 7) * 11) + "%";
+        sub.style.top = descentPhase === "arrival" ? "22%" :
+          descentPhase === "travel" ? "73%" : (20 + Math.min(state.depth, 7) * 11) + "%";
         sub.style.left = (38 + (state.depth % 3) * 9) + "%";
       }
 
       let descentSceneTimer = 0;
+      let descentMoveTimer = 0;
+      let descentPhase = "";
       function showDescentScene() {
         const view = document.getElementById("oceanWindow");
-        view.classList.add("immersive");
+        const destination = zoneAt(state.depth);
+        view.classList.remove("travel-phase");
+        view.classList.add("immersive", "arrival-phase");
         document.body.classList.add("descent-scene-open");
+        descentPhase = "arrival";
+        document.getElementById("arrivalName").textContent = destination.name;
+        document.getElementById("arrivalDepth").textContent = destination.depth + " below sea level";
+        const life = document.getElementById("seaLife");
+        life.replaceChildren();
+        const creatures = state.depth <= 1 ? ["🐟", "🐠", "🐡", "🐟", "🐬", "🪼"] :
+          state.depth <= 3 ? ["🪼", "🦑", "🐟", "🪼", "🐙", "🦐"] :
+          ["🪼", "🦑", "🐙", "🦐", "🪼", "🐟"];
+        creatures.forEach((creature, index) => {
+          const fish = document.createElement("span");
+          fish.className = "sea-creature";
+          fish.textContent = creature;
+          fish.style.top = (15 + ((index * 13) % 72)) + "%";
+          fish.style.animationDuration = (6 + (index % 4) * 1.8) + "s";
+          fish.style.animationDelay = (index * -1.15) + "s";
+          fish.style.fontSize = (1.35 + (index % 3) * 0.35) + "rem";
+          life.appendChild(fish);
+        });
         window.clearTimeout(descentSceneTimer);
-        descentSceneTimer = window.setTimeout(closeDescentScene, 3200);
+        window.clearTimeout(descentMoveTimer);
+        descentMoveTimer = window.setTimeout(() => {
+          descentPhase = "travel";
+          view.classList.remove("arrival-phase");
+          view.classList.add("travel-phase");
+          render();
+        }, 1300);
+        descentSceneTimer = window.setTimeout(closeDescentScene, 5200);
       }
 
       function closeDescentScene() {
-        document.getElementById("oceanWindow").classList.remove("immersive");
+        document.getElementById("oceanWindow").classList.remove("immersive", "arrival-phase", "travel-phase");
         document.body.classList.remove("descent-scene-open");
+        descentPhase = "";
         window.clearTimeout(descentSceneTimer);
+        window.clearTimeout(descentMoveTimer);
+        render();
       }
 
       document.getElementById("closeDescentScene").addEventListener("click", closeDescentScene);
