@@ -575,7 +575,6 @@
         setEstimate("deepLabEta", deepLabCost(), rate);
         setEstimate("deepSubEta", deepSubCost(), rate);
         const nextCoreReward = 1 + Math.floor(state.depth / 2);
-        document.getElementById("coreEta").textContent = state.cores >= 5 ? "Ready now" : "Next descent earns " + nextCoreReward + " core" + (nextCoreReward === 1 ? "" : "s");
         document.getElementById("resetButton").disabled = banned;
         document.getElementById("exportSave").disabled = banned;
         document.getElementById("importSave").disabled = banned;
